@@ -1,0 +1,230 @@
+assets:
+    example:
+        version:
+            url:
+            extract:
+                - github:
+                - field: tag_name
+                - rmv:
+                - trim:
+        assets:
+            url:
+            extract:
+                strip: 1
+                filter:
+                    - 
+
+    nushell:
+        version:
+            url: https://api.github.com/repos/nushell/nushell/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/nushell/nushell/releases/latest/download/nu-{}-x86_64-unknown-linux-musl.tar.gz
+            extract:
+                strip: 1
+                filter:
+                    - nu
+                    - nu_plugin_query
+        config:
+            url: https://github.com/fj0r/nushell.git
+            post:
+                - register nu_plugin_query
+    neovim:
+        version:
+            url:
+            extract:
+                - github:
+        assets:
+            url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+            extract:
+                strip: 1
+                filter:
+                    - 
+        config:
+            url: https://github.com/fj0r/nvim-lua.git
+            post: 
+    rg:
+        version:
+            url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{}-x86_64-unknown-linux-musl.tar.gz
+            extract:
+                #format: gz
+                strip: 1
+                filter:
+                    - rg
+    fd:
+        version:
+            url: https://api.github.com/repos/sharkdp/fd/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/sharkdp/fd/releases/latest/download/fd-{}-x86_64-unknown-linux-musl.tar.gz
+            extract:
+                strip: 1
+                filter:
+                    - fd
+    yq:
+        version:
+            url: https://api.github.com/repos/mikefarah/yq/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz
+            cache: yq-{}_linux_amd64.tar.gz
+            extract:
+                filter:
+                    - {file: yq_linux_amd64, rename: yq}
+    dust:
+        version:
+            url: https://api.github.com/repos/bootandy/dust/releases/latest
+            extract:
+                - field: tag_name
+                - trim:
+        assets:
+            url: https://github.com/bootandy/dust/releases/latest/download/dust-{}-x86_64-unknown-linux-musl.tar.gz
+            extract:
+                strip: 1
+                filter:
+                    - dust
+    just:
+        version:
+            url: https://api.github.com/repos/casey/just/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/casey/just/releases/latest/download/just-{}-x86_64-unknown-linux-musl.tar.gz
+            extract:
+                filter:
+                    - just
+    mask:
+        version:
+            url: https://api.github.com/repos/jacobdeichert/mask/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-{}-x86_64-unknown-linux-musl.zip
+            extract:
+                filter:
+                    - mask
+    watchexec:
+        version:
+            url: https://api.github.com/repos/watchexec/watchexec/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/watchexec/watchexec/releases/latest/download/watchexec-{}-x86_64-unknown-linux-gnu.tar.xz
+            extract:
+                strip: 1
+                filter:
+                    - watchexec
+    btm:
+        version:
+            url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/ClementTsang/bottom/releases/latest/download/bottom_x86_64-unknown-linux-musl.tar.gz
+            cache: bottom-{}_x86_64-unknown-linux-musl.tar.gz
+            extract:
+                filter:
+                    - btm
+    bdwh:
+        version:
+            url: https://api.github.com/repos/imsnif/bandwhich/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/imsnif/bandwhich/releases/download/{}/bandwhich-{}-x86_64-unknown-linux-musl.tar.gz
+            extract:
+
+    wasmtime:
+        version:
+            url: https://api.github.com/repos/bytecodealliance/wasmtime/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-{}-x86_64-linux.tar.xz
+            extract:
+                strip: 1
+                filter:
+                    - wasmtime
+    spin:
+        version:
+            url: https://api.github.com/repos/fermyon/spin/releases/latest
+            extract:
+                - github:
+        assets:
+            url: https://github.com/fermyon/spin/releases/download/{}/spin-{}-linux-amd64.tar.gz
+            extract:
+                filter:
+                    - spin
+versions:
+    rg: 1.7.0
+
+layers:
+    base:
+        - sudo tzdata
+    search:
+        - rg
+        - fd
+    http:
+        - curl
+        - ca-certificates
+    ssh:
+        - rsync
+    crypto:
+        - openssl
+        - pwgen
+    python:
+        - python3
+        - python3-pip
+        - pip: [ipython debugpy pydantic pytest]
+        - pip: [httpx hydra-core typer pyyaml deepmerge]
+        - pip: [PyParsing structlog python-json-logger]
+        - pip: [decorator more-itertools cachetools] 
+    git:
+        - git
+    json:
+        - jq
+    yaml:
+        - yq
+    exec:
+        - just
+        - mask
+        - watchexec
+    proc:
+        - procps
+        - htop
+        - btm
+    netadmin:
+        - tcpdump
+        - socat
+    net:
+        - inetutils-ping
+        - iproute2
+        - iptables
+        - net-tools
+        - bdwh
+    cron:
+        - cron
+    sqlite:
+        - sqlite3
+    file:
+        - patch
+        - tree
+        - lsof
+        - dust
+    log:
+        - logrotate
+    zip:
+        - xz-utils
+        - zstd
+        - zip
+        - unzip
+    s3:
+        - s3fs
+        - fuse
