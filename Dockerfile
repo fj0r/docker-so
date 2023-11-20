@@ -3,4 +3,4 @@ FROM ${BASEIMAGE}
 
 COPY setup /opt/setup
 
-RUN nu /opt/setup/init.nu
+RUN nu /opt/setup/init.nu dry-run

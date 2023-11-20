@@ -1,26 +1,12 @@
 assets:
-    example:
-        version:
-            url:
-            extract:
-                - github:
-                - field: tag_name
-                - rmv:
-                - trim:
-        assets:
-            url:
-            extract:
-                strip: 1
-                filter:
-                    - 
-
     nushell:
+        type: github
         version:
             url: https://api.github.com/repos/nushell/nushell/releases/latest
             extract:
                 - github:
         assets:
-            url: https://github.com/nushell/nushell/releases/latest/download/nu-{}-x86_64-unknown-linux-musl.tar.gz
+            url: https://github.com/nushell/nushell/releases/download/{}/nu-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 strip: 1
                 filter:
@@ -31,6 +17,7 @@ assets:
             post:
                 - register nu_plugin_query
     neovim:
+        type: github
         version:
             url:
             extract:
@@ -40,11 +27,12 @@ assets:
             extract:
                 strip: 1
                 filter:
-                    - 
+                    -
         config:
             url: https://github.com/fj0r/nvim-lua.git
-            post: 
+            post:
     rg:
+        type: github
         version:
             url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
             extract:
@@ -57,6 +45,7 @@ assets:
                 filter:
                     - rg
     fd:
+        type: github
         version:
             url: https://api.github.com/repos/sharkdp/fd/releases/latest
             extract:
@@ -68,6 +57,7 @@ assets:
                 filter:
                     - fd
     yq:
+        type: github
         version:
             url: https://api.github.com/repos/mikefarah/yq/releases/latest
             extract:
@@ -79,6 +69,7 @@ assets:
                 filter:
                     - {file: yq_linux_amd64, rename: yq}
     dust:
+        type: github
         version:
             url: https://api.github.com/repos/bootandy/dust/releases/latest
             extract:
@@ -91,6 +82,7 @@ assets:
                 filter:
                     - dust
     just:
+        type: github
         version:
             url: https://api.github.com/repos/casey/just/releases/latest
             extract:
@@ -101,6 +93,7 @@ assets:
                 filter:
                     - just
     mask:
+        type: github
         version:
             url: https://api.github.com/repos/jacobdeichert/mask/releases/latest
             extract:
@@ -111,6 +104,7 @@ assets:
                 filter:
                     - mask
     watchexec:
+        type: github
         version:
             url: https://api.github.com/repos/watchexec/watchexec/releases/latest
             extract:
@@ -122,6 +116,7 @@ assets:
                 filter:
                     - watchexec
     btm:
+        type: github
         version:
             url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
             extract:
@@ -133,6 +128,7 @@ assets:
                 filter:
                     - btm
     bdwh:
+        type: github
         version:
             url: https://api.github.com/repos/imsnif/bandwhich/releases/latest
             extract:
@@ -142,6 +138,7 @@ assets:
             extract:
 
     wasmtime:
+        type: github
         version:
             url: https://api.github.com/repos/bytecodealliance/wasmtime/releases/latest
             extract:
@@ -153,6 +150,7 @@ assets:
                 filter:
                     - wasmtime
     spin:
+        type: github
         version:
             url: https://api.github.com/repos/fermyon/spin/releases/latest
             extract:
@@ -162,69 +160,126 @@ assets:
             extract:
                 filter:
                     - spin
-versions:
-    rg: 1.7.0
-
 layers:
-    base:
-        - sudo tzdata
-    search:
-        - rg
+    - name: base
+      include:
+        - sudo
+        - tzdata
+    - name: nu
+      include:
+        - nushell
+      require:
+        - base
+    - name: nvim
+      include:
+        - neovim
+      require:
+        - base
+    - name: nvim-dev
+      include:
+        - lua-lsp
+      require:
+        - nvim
+    - name: rust
+      include:
+        - rust
+        - rust-analyzer
+      require:
+        - nvim
+    - name: haskell
+      include:
+      require:
+        - nvim
+    - name: golang
+      include:
+      require:
+        - nvim
+    - name: javascript-runtime
+      include:
+    - name: python-runtime
+      include:
+        - python3
+        - python3-pip
+    - name: python
+      include:
+      require:
+        - nvim
+        - python-runtime
+    - name: search
+      include:
+        - ripgrep
         - fd
-    http:
+    - name: http
+      include:
         - curl
-        - ca-certificates
-    ssh:
+        - deb: [ca-certificates]
+    - name: ssh
+      include:
         - rsync
-    crypto:
+    - name: crypto
+      include:
         - openssl
         - pwgen
-    python:
+    - name: python
+      include:
         - python3
         - python3-pip
         - pip: [ipython debugpy pydantic pytest]
         - pip: [httpx hydra-core typer pyyaml deepmerge]
         - pip: [PyParsing structlog python-json-logger]
-        - pip: [decorator more-itertools cachetools] 
-    git:
+        - pip: [decorator more-itertools cachetools]
+    - name: git
+      include:
         - git
-    json:
+    - name: json
+      include:
         - jq
-    yaml:
+    - name: yaml
+      include:
         - yq
-    exec:
+    - name: exec
+      include:
         - just
         - mask
         - watchexec
-    proc:
+    - name: proc
+      include:
         - procps
         - htop
         - btm
-    netadmin:
+    - name: netadmin
+      include:
         - tcpdump
         - socat
-    net:
+    - name: net
+      include:
         - inetutils-ping
         - iproute2
         - iptables
         - net-tools
         - bdwh
-    cron:
+    - name: cron
+      include:
         - cron
-    sqlite:
+    - name: sqlite
+      include:
         - sqlite3
-    file:
+    - name: file
+      include:
         - patch
         - tree
         - lsof
         - dust
-    log:
+    - name: log
+      include:
         - logrotate
-    zip:
+    - name: zip
+      include:
         - xz-utils
         - zstd
         - zip
         - unzip
-    s3:
+    - name: s3
+      include:
         - s3fs
         - fuse
