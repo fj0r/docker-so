@@ -1,4 +1,4 @@
-assets:
+defs:
     nushell:
         type: github
         version:
@@ -31,7 +31,8 @@ assets:
         config:
             url: https://github.com/fj0r/nvim-lua.git
             post:
-    rg:
+    lua-lsp:
+    ripgrep:
         type: github
         version:
             url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
@@ -170,16 +171,16 @@ layers:
         - nushell
       require:
         - base
+      use:
+        - git
     - name: nvim
       include:
         - neovim
-      require:
-        - base
-    - name: nvim-dev
-      include:
         - lua-lsp
       require:
-        - nvim
+        - base
+      use:
+        - git
     - name: rust
       include:
         - rust
@@ -198,8 +199,10 @@ layers:
       include:
     - name: python-runtime
       include:
-        - python3
-        - python3-pip
+        - debian: python3
+        - debian: python3-pip
+        - arch: python
+        - arch: python-pip
     - name: python
       include:
       require:
@@ -220,14 +223,14 @@ layers:
       include:
         - openssl
         - pwgen
-    - name: python
+    - name: python-utils
       include:
-        - python3
-        - python3-pip
-        - pip: [ipython debugpy pydantic pytest]
-        - pip: [httpx hydra-core typer pyyaml deepmerge]
-        - pip: [PyParsing structlog python-json-logger]
-        - pip: [decorator more-itertools cachetools]
+        - pip: [ipython, debugpy, pydantic, pytest]
+        - pip: [httpx, hydra-core, typer, pyyaml, deepmerge]
+        - pip: [PyParsing, structlog, python-json-logger]
+        - pip: [decorator, more-itertools, cachetools]
+      require:
+        - python-runtime
     - name: git
       include:
         - git
@@ -283,3 +286,6 @@ layers:
       include:
         - s3fs
         - fuse
+    - name: wget
+      include:
+        - wget
