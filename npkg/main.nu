@@ -1,3 +1,18 @@
+#####################
+###     utils     ###
+#####################
+def unindent [] {
+    let txt = $in | lines | range 1..-2
+    let indent = $txt.0 | parse --regex '^(?P<indent>\s*)' | get indent.0 | str length
+    $txt
+    | each {|s| $s | str substring $indent.. }
+    | str join (char newline)
+}
+
+def _p [] {
+    print $in
+}
+
 def deduplicate [getter] {
     let list = $in
     mut ex = []
@@ -30,6 +45,9 @@ def os-type [] {
     }
 }
 
+######################
+###      deps      ###
+######################
 def calc-deps [field layers comp] {
     let dep = if ($field in $comp) and (not ($comp | get $field | is-empty)) {
         $layers
@@ -118,16 +136,15 @@ def merge-actions [defs --os-type:string] {
     }
 }
 
-def unindent [] {
-    let txt = $in | lines | range 1..-2
-    let indent = $txt.0 | parse --regex '^(?P<indent>\s*)' | get indent.0 | str length
-    $txt
-    | each {|s| $s | str substring $indent.. }
-    | str join (char newline)
-}
 
-def _p [] {
-    print $in
+######################
+###      acts      ###
+######################
+def other-acts [] {
+    [
+        {|d, p| print $"---($p)" }
+        {|d, p| print $"===($p)" }
+    ]
 }
 
 def acts [] {
@@ -199,34 +216,48 @@ def acts [] {
     }
 }
 
-def run [os ix can_ignore act arg?] {
-    let t = (acts)
-    let a = {||
-        if $ix == 1 {
-            let sep = '################################################################################'
-            print $sep
-            do ($t | get $os | get $act | get 0) $arg
-            print $sep
-        }
-        do ($t | get $os | get $act | get $ix) $arg
-    }
-    if $can_ignore {
-        if not ($arg | is-empty) {
-            do $a
-        }
+#####################
+###      run      ###
+#####################
+def run-with-other [os act lv arg defs o t] {
+    if $act == 'other' {
+        do ($o | get $lv) $defs $arg
     } else {
-        do $a
+        do ($t | get $os | get $act | get $lv) $arg
     }
 }
 
-def setup [--os-type: string --dry-run] {
+def run-with-level [os act lv arg defs o t] {
+    if $lv == 1 {
+        let sep = '################################################################################'
+        print $sep
+        run-with-other $os $act 0 $arg $defs $o $t
+        print $sep
+    }
+    run-with-other $os $act $lv $arg $defs $o $t
+}
+
+def run [os lv defs can_ignore act arg?] {
+    let t = (acts)
+    let o = (other-acts)
+    if $can_ignore {
+        if not ($arg | is-empty) {
+            run-with-level $os $act $lv $arg $defs $o $t
+        }
+    } else {
+        run-with-level $os $act $lv $arg $defs $o $t
+    }
+}
+
+def setup [defs --os-type: string --dry-run] {
     let x = $in
-    let ix = if $dry_run { 0 } else { 1 }
-    run $os_type $ix false setup
-    run $os_type $ix true  install ($x.require.os? | append $x.use.os?)
-    run $os_type $ix true  pip $x.require.pip?
-    run $os_type $ix true  npm $x.require.npm?
-    run $os_type $ix true  teardown $x.use.os?
+    let lv = if $dry_run { 0 } else { 1 }
+    run $os_type $lv null  false setup
+    run $os_type $lv null  true  install ($x.require.os? | append $x.use.os?)
+    run $os_type $lv null  true  pip $x.require.pip?
+    run $os_type $lv null  true  npm $x.require.npm?
+    run $os_type $lv $defs true  other $x.require.other?
+    run $os_type $lv null  true  teardown $x.use.os?
 }
 
 def compos [context: string, offset: int] {
@@ -260,17 +291,17 @@ export def main [...args:string@compos] {
         show-actions => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup --os-type $ostype --dry-run
+            | setup $manifest.defs --os-type $ostype --dry-run
         }
         setup => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup --os-type $ostype
+            | setup $manifest.defs --os-type $ostype
         }
         test-debian => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup --os-type 'debian' --dry-run
+            | setup $manifest.defs --os-type 'debian' --dry-run
         }
         _ => {
             echo $manifest | to json
