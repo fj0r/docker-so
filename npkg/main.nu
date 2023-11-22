@@ -216,45 +216,15 @@ def run-other [lv defs arg] {
     }
 }
 
-def _extra [act arg] {
-    let o = $in
-    match $act {
-        field => {
-            if not ($arg | is-empty) {
-                if $arg in $o {
-                    $o | get $arg
-                } else {
-                    null
-                }
-            } else {
-                $o
-            }
-        }
-        trim => {
-            $o | str trim
-        }
-        github => {
-            $o
-            | from json
-            | _extra 'field' 'tag_name'
-            | _extra 'trim' null
-        }
-        unzip => {
-            print 'no impl!!!!!!!!!!!'
-        }
-    }
-}
-
-def _run-extrators [extract] {
-    mut o = $in
-    for i in ($extract | transpose k v) {
-        $o = ($o | _extra $i.k $i.v)
-    }
-    $o
-}
 
 def extra [input act arg?] {
     match $act {
+        from-json => {
+            $input | from json
+        }
+        prefix => {
+            $"($arg)($input)"
+        }
         field => {
             if not ($arg | is-empty) {
                 if $arg in $input {
@@ -273,10 +243,13 @@ def extra [input act arg?] {
             $input | parse -r '(?P<v>[0-9\.]+)' | get 0.v
         }
         github => {
-            let x = $input | from json
-            let x = (extra $x 'field' 'tag_name')
-            let x = (extra $x 'trim')
-            extra $x 'filter-num'
+            let ex = [
+                {field: 'tag_name'}
+                {trim: null }
+                {filter-num: null} ]
+            $input
+            | from json
+            | run-extrators $ex
         }
         unzip => {
             print 'no impl!!!!!!!!!!!'
@@ -285,11 +258,17 @@ def extra [input act arg?] {
 }
 
 def run-extrators [extract] {
-    mut o = $in
-    for i in ($extract | transpose k v) {
-        $o = (extra $o $i.k $i.v)
+    let o = $in
+    $extract
+    | reduce -f [$o] {|x, acc|
+        let pre = $acc | last
+        let r = $x
+            | transpose k v
+            | each {|i| extra $pre $i.k $i.v }
+            | get 0
+        [$r]
     }
-    $o
+    | get 0
 }
 
 
@@ -395,12 +374,29 @@ export def main [...args:string@compos] {
                     let url = $i.version?.url?
                     let ext = $i.version?.extract
                     if not ($url | is-empty) {
-                        let ver = (curl -sSL $url| run-extrators $ext)
+                        print $url
+                        let ver = (curl -sSL $url)
+                        print $ver
+                        #let ver = $ver | run-extrators $ext
                         $data.versions = ($data.versions | upsert $item.k $ver)
                     }
                 }
             }
             $data | to yaml | save -f $"($env.FILE_PWD)/data.yml"
+        }
+        test-extract => {
+            let x = [
+                {github: null}
+            ]
+            let x1 = [
+                {from-json: null}
+                {field: "tag_name"}
+                {trim: null}
+                {filter-num: null}
+                {prefix: "_"}
+            ]
+            let b = '{"tag_name": "  vx1.2.3.4"}' | run-extrators $x1 | to json
+            print $b
         }
         _ => {
             echo $manifest | to json
