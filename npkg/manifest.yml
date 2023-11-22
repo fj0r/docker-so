@@ -8,10 +8,11 @@ defs:
         assets:
             url: https://github.com/nushell/nushell/releases/download/{}/nu-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
-                strip: 1
-                filter:
-                    - nu
-                    - nu_plugin_query
+                - unzip:
+                    strip: 1
+                    filter:
+                      - nu
+                      - nu_plugin_query
         config:
             url: https://github.com/fj0r/nushell.git
             post:
@@ -25,9 +26,8 @@ defs:
         assets:
             url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
             extract:
-                strip: 1
-                filter:
-                    -
+                - unzip:
+                    strip: 1
         config:
             url: https://github.com/fj0r/nvim-lua.git
             post:
@@ -41,10 +41,11 @@ defs:
         assets:
             url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
-                #format: gz
-                strip: 1
-                filter:
-                    - rg
+                - unzip:
+                    strip: 1
+                    format: gz
+                    filter:
+                        - rg
     fd:
         type: github
         version:
@@ -54,9 +55,10 @@ defs:
         assets:
             url: https://github.com/sharkdp/fd/releases/latest/download/fd-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
-                strip: 1
-                filter:
-                    - fd
+                - unzip:
+                    strip: 1
+                    filter:
+                        - fd
     yq:
         type: github
         version:
@@ -67,8 +69,9 @@ defs:
             url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz
             cache: yq-{}_linux_amd64.tar.gz
             extract:
-                filter:
-                    - {file: yq_linux_amd64, rename: yq}
+                - unzip:
+                    filter:
+                        - {file: yq_linux_amd64, rename: yq}
     dust:
         type: github
         version:
@@ -79,9 +82,10 @@ defs:
         assets:
             url: https://github.com/bootandy/dust/releases/latest/download/dust-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
-                strip: 1
-                filter:
-                    - dust
+                - unzip:
+                    strip: 1
+                    filter:
+                        - dust
     just:
         type: github
         version:
@@ -91,8 +95,9 @@ defs:
         assets:
             url: https://github.com/casey/just/releases/latest/download/just-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
-                filter:
-                    - just
+                - unzip:
+                    - filter:
+                        - just
     mask:
         type: github
         version:
@@ -102,8 +107,9 @@ defs:
         assets:
             url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-{}-x86_64-unknown-linux-musl.zip
             extract:
-                filter:
-                    - mask
+                - unzip:
+                    filter:
+                        - mask
     watchexec:
         type: github
         version:
@@ -113,9 +119,10 @@ defs:
         assets:
             url: https://github.com/watchexec/watchexec/releases/latest/download/watchexec-{}-x86_64-unknown-linux-gnu.tar.xz
             extract:
-                strip: 1
-                filter:
-                    - watchexec
+                - unzip:
+                    strip: 1
+                    filter:
+                        - watchexec
     btm:
         type: github
         version:
@@ -126,8 +133,9 @@ defs:
             url: https://github.com/ClementTsang/bottom/releases/latest/download/bottom_x86_64-unknown-linux-musl.tar.gz
             cache: bottom-{}_x86_64-unknown-linux-musl.tar.gz
             extract:
-                filter:
-                    - btm
+                - unzip:
+                    filter:
+                        - btm
     bdwh:
         type: github
         version:
@@ -137,6 +145,7 @@ defs:
         assets:
             url: https://github.com/imsnif/bandwhich/releases/download/{}/bandwhich-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
+                - unzip:
 
     wasmtime:
         type: github
@@ -147,9 +156,10 @@ defs:
         assets:
             url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-{}-x86_64-linux.tar.xz
             extract:
-                strip: 1
-                filter:
-                    - wasmtime
+                - unzip:
+                    strip: 1
+                    filter:
+                        - wasmtime
     spin:
         type: github
         version:
@@ -159,8 +169,9 @@ defs:
         assets:
             url: https://github.com/fermyon/spin/releases/download/{}/spin-{}-linux-amd64.tar.gz
             extract:
-                filter:
-                    - spin
+                - unzip:
+                    filter:
+                        - spin
 layers:
     - name: base
       include:

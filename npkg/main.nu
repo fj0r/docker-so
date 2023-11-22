@@ -61,15 +61,15 @@ def calc-deps [field layers comp] {
 }
 
 def sort-deps [cs] {
-    let x = $in
-    let r = $x
+    let o = $in
+    let r = $o
         | where name in $cs
-        | each {|y| calc-deps 'require' $x $y }
+        | each {|y| calc-deps 'require' $o $y }
         | flatten
         | deduplicate {|y| $y.name }
-    let u = $x
+    let u = $o
         | where name in $cs
-        | each {|y| calc-deps 'use' $x $y }
+        | each {|y| calc-deps 'use' $o $y }
         | flatten
         | deduplicate {|y| $y.name }
     {
@@ -79,7 +79,7 @@ def sort-deps [cs] {
 }
 
 def resolve-pkgs [] {
-    let x = $in
+    let o = $in
         | reduce -f {require: [], use: []} {|x, acc|
             mut acc = $acc
             if not ($x.require.include | is-empty) {
@@ -90,8 +90,8 @@ def resolve-pkgs [] {
             }
             $acc
         }
-    let r = $x.require | deduplicate {|x| $x}
-    let u = $x.use | deduplicate {|x| $x}
+    let r = $o.require | deduplicate {|x| $x}
+    let u = $o.use | deduplicate {|x| $x}
     {
         require: $r
         use: ($u | filter {|x| not ($x in $r)})
@@ -140,13 +140,6 @@ def merge-actions [defs --os-type:string] {
 ######################
 ###      acts      ###
 ######################
-def other-acts [] {
-    [
-        {|d, p| print $"---($p)" }
-        {|d, p| print $"===($p)" }
-    ]
-}
-
 def acts [] {
     {
         debian: {
@@ -216,54 +209,144 @@ def acts [] {
     }
 }
 
+def run-other [lv defs arg] {
+    print $"---($arg)"
+    if $lv == 1 {
+        print $"===($arg)"
+    }
+}
+
+def _extra [act arg] {
+    let o = $in
+    match $act {
+        field => {
+            if not ($arg | is-empty) {
+                if $arg in $o {
+                    $o | get $arg
+                } else {
+                    null
+                }
+            } else {
+                $o
+            }
+        }
+        trim => {
+            $o | str trim
+        }
+        github => {
+            $o
+            | from json
+            | _extra 'field' 'tag_name'
+            | _extra 'trim' null
+        }
+        unzip => {
+            print 'no impl!!!!!!!!!!!'
+        }
+    }
+}
+
+def _run-extrators [extract] {
+    mut o = $in
+    for i in ($extract | transpose k v) {
+        $o = ($o | _extra $i.k $i.v)
+    }
+    $o
+}
+
+def extra [input act arg?] {
+    match $act {
+        field => {
+            if not ($arg | is-empty) {
+                if $arg in $input {
+                    $input | get $arg
+                } else {
+                    null
+                }
+            } else {
+                $input
+            }
+        }
+        trim => {
+            $input | str trim
+        }
+        filter-num => {
+            $input | parse -r '(?P<v>[0-9\.]+)' | get 0.v
+        }
+        github => {
+            let x = $input | from json
+            let x = (extra $x 'field' 'tag_name')
+            let x = (extra $x 'trim')
+            extra $x 'filter-num'
+        }
+        unzip => {
+            print 'no impl!!!!!!!!!!!'
+        }
+    }
+}
+
+def run-extrators [extract] {
+    mut o = $in
+    for i in ($extract | transpose k v) {
+        $o = (extra $o $i.k $i.v)
+    }
+    $o
+}
+
+
 #####################
 ###      run      ###
 #####################
-def run-with-other [os act lv arg defs o t] {
+def run-with-other [os act lv arg defs t] {
     if $act == 'other' {
-        do ($o | get $lv) $defs $arg
+        run-other $lv $defs $arg
     } else {
         do ($t | get $os | get $act | get $lv) $arg
     }
 }
 
-def run-with-level [os act lv arg defs o t] {
+def run-with-level [os act lv arg defs t] {
     if $lv == 1 {
         let sep = '################################################################################'
         print $sep
-        run-with-other $os $act 0 $arg $defs $o $t
+        run-with-other $os $act 0 $arg $defs $t
         print $sep
     }
-    run-with-other $os $act $lv $arg $defs $o $t
+    run-with-other $os $act $lv $arg $defs $t
 }
 
 def run [os lv defs can_ignore act arg?] {
     let t = (acts)
-    let o = (other-acts)
     if $can_ignore {
         if not ($arg | is-empty) {
-            run-with-level $os $act $lv $arg $defs $o $t
+            run-with-level $os $act $lv $arg $defs $t
         }
     } else {
-        run-with-level $os $act $lv $arg $defs $o $t
+        run-with-level $os $act $lv $arg $defs $t
     }
 }
 
 def setup [defs --os-type: string --dry-run] {
-    let x = $in
+    let o = $in
     let lv = if $dry_run { 0 } else { 1 }
     run $os_type $lv null  false setup
-    run $os_type $lv null  true  install ($x.require.os? | append $x.use.os?)
-    run $os_type $lv null  true  pip $x.require.pip?
-    run $os_type $lv null  true  npm $x.require.npm?
-    run $os_type $lv $defs true  other $x.require.other?
-    run $os_type $lv null  true  teardown $x.use.os?
+    run $os_type $lv null  true  install ($o.require.os? | append $o.use.os?)
+    run $os_type $lv null  true  pip $o.require.pip?
+    run $os_type $lv null  true  npm $o.require.npm?
+    run $os_type $lv $defs true  other $o.require.other?
+    run $os_type $lv null  true  teardown $o.use.os?
 }
 
 def compos [context: string, offset: int] {
     let argv = $context | str substring 0..$offset | split row -r "\\s+" | range 1.. | filter {|s| not ($s | str starts-with "-")}
     match ($argv | length) {
-        1 => [resolve-pkgs merge-actions show-actions setup test-debian]
+        1 => [
+            resolve-pkgs
+            merge-actions
+            show-actions
+            setup
+            test-debian
+            update-version
+        ]
         _ => {
             let manifest = open $"($env.PWD)/manifest.yml"
             $manifest.layers | get name
@@ -275,6 +358,7 @@ export def main [...args:string@compos] {
     let act = $args.0
     let layers = $args | range 1..
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
+    mut data = open $"($env.FILE_PWD)/data.yml"
     let ostype = (os-type)
     let pkgs = $manifest.layers
         | sort-deps $layers
@@ -302,6 +386,21 @@ export def main [...args:string@compos] {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
             | setup $manifest.defs --os-type 'debian' --dry-run
+        }
+        update-version => {
+            for item in ($manifest.defs | transpose k v) {
+                let i = $item.v?
+                if $i.type? == 'github' {
+                    print $'-------------------($item.k)'
+                    let url = $i.version?.url?
+                    let ext = $i.version?.extract
+                    if not ($url | is-empty) {
+                        let ver = (curl -sSL $url| run-extrators $ext)
+                        $data.versions = ($data.versions | upsert $item.k $ver)
+                    }
+                }
+            }
+            $data | to yaml | save -f $"($env.FILE_PWD)/data.yml"
         }
         _ => {
             echo $manifest | to json

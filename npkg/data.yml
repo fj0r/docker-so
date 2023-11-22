@@ -1,2 +1,14 @@
 versions:
-    rg: 1.7.0
+  rg: 1.7.0
+  nushell: 0.87.1
+  ripgrep: 13.0.0
+  fd: 8.7.1
+  yq: 4.40.2
+  dust: 0.8.6
+  just: 1.16.0
+  mask: 0.11.4
+  watchexec: 1.23.0
+  btm: 0.9.6
+  bdwh: 0.21.1
+  wasmtime: 15.0.0
+  spin: 2.0.1

@@ -6,6 +6,9 @@ export def main [...args:string@compos] {
         test => {
             nu npkg/main.nu test-debian base nu nvim python-utils search
         }
+        update => {
+            nu npkg/main.nu update-version
+        }
         merge-actions => {
             nu npkg/main.nu merge-actions base nu nvim python-utils search
         }
@@ -23,7 +26,7 @@ def compos [context: string, offset: int] {
         | range 1..
         | where not ($it | str starts-with "-")
     match ($argv | length) {
-        1 => [test build merge-actions]
+        1 => [test build merge-actions update]
         2 => []
         _ => []
     }
