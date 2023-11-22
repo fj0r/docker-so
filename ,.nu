@@ -4,7 +4,7 @@ export def main [...args:string@compos] {
             nerdctl build -t fj0rd/so:test .
         }
         test => {
-            nu npkg/main.nu setup base nu nvim python-utils search
+            nu npkg/main.nu test-debian base nu nvim python-utils search
         }
         _ => {
             echo 'no act'
