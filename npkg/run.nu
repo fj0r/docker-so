@@ -25,9 +25,9 @@ def _p [] {
 
 def log [title] {
     let o = $in
-    print $"======($title)======"
+    print $"<<<<<< ($title) >>>>>>"
     print ($o | to yaml)
-    print $"======($title)======"
+    print $">>>>>> ($title) <<<<<<"
     print $"(char newline)"
 }
 
@@ -381,21 +381,6 @@ def setup [
     run ($argt | upsert act teardown | upsert can_ignore false)
 }
 
-def compos [context: string, offset: int] {
-    let argv = $context | str substring 0..$offset | split row -r "\\s+" | range 1.. | filter {|s| not ($s | str starts-with "-")}
-    match ($argv | length) {
-        1 => [
-            setup
-            test-debian
-            update-version
-        ]
-        _ => {
-            let manifest = open $"($env.PWD)/manifest.yml"
-            $manifest.pkgs | get name
-        }
-    }
-}
-
 export def main [
     --cache
     --dry-run
@@ -421,10 +406,11 @@ export def main [
             | merge-actions $manifest.defs --os-type $ostype
             | setup $manifest.defs $data --os-type $ostype --target /usr/local --dry-run $dry_run
         }
-        test-debian => {
+        test-os => {
+            let ostype = if ($env.ostype? | is-empty) { 'debian' } else { $env.ostype }
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type 'debian' --dry-run true
+            | setup $manifest.defs $data --os-type $ostype --dry-run true
         }
         update-version => {
             let x = (update-version $manifest.defs)
@@ -437,5 +423,20 @@ export def main [
             echo $manifest | to json
         }
 
+    }
+}
+
+def compos [context: string, offset: int] {
+    let argv = $context | str substring 0..$offset | split row -r "\\s+" | range 1.. | filter {|s| not ($s | str starts-with "-")}
+    match ($argv | length) {
+        1 => [
+            setup
+            test-os
+            update-version
+        ]
+        _ => {
+            let manifest = open $"($env.PWD)/manifest.yml"
+            $manifest.pkgs | get name
+        }
     }
 }

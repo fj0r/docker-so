@@ -210,10 +210,8 @@ pkgs:
       include:
     - name: python-runtime
       include:
-        - debian: python3
-        - debian: python3-pip
-        - arch: python
-        - arch: python-pip
+        - debian: [python3, python3-pip]
+        - arch: [python, python-pip]
     - name: python
       include:
       require:
@@ -226,7 +224,7 @@ pkgs:
     - name: http
       include:
         - curl
-        - debian: ca-certificates
+        - debian: [ca-certificates]
     - name: ssh
       include:
         - rsync
