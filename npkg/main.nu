@@ -239,14 +239,14 @@ def extra [input act arg?] {
         trim => {
             $input | str trim
         }
-        filter-num => {
+        only-nums => {
             $input | parse -r '(?P<v>[0-9\.]+)' | get 0.v
         }
         github => {
             let ex = [
                 {field: 'tag_name'}
                 {trim: null }
-                {filter-num: null} ]
+                {only-nums: null} ]
             run-extrators ($input | from json) $ex
         }
         unzip => {
@@ -260,7 +260,7 @@ def run-extrators [input extract] {
     | reduce -f $input {|x, acc|
         let r = $x
             | transpose k v
-            | each {|i| extra $acc $i.k $i.v }
+            | each {|y| extra $acc $y.k $y.v }
             | get 0
         $r
     }
@@ -268,7 +268,7 @@ def run-extrators [input extract] {
 
 def update-version [manifest] {
     mut data = {}
-    for item in ($manifest.defs | transpose k v) {
+    for item in ($manifest | transpose k v) {
         let i = $item.v?
         print $'-------------------($item.k)'
         let url = $i.version?.url?
@@ -347,7 +347,7 @@ export def main [...args:string@compos] {
     let act = $args.0
     let layers = $args | range 1..
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
-    mut data = open $"($env.FILE_PWD)/data.yml"
+    let data = open $"($env.FILE_PWD)/data.yml"
     let ostype = (os-type)
     let pkgs = $manifest.layers
         | sort-deps $layers
@@ -377,8 +377,11 @@ export def main [...args:string@compos] {
             | setup $manifest.defs --os-type 'debian' --dry-run
         }
         update-version => {
-            update-version $manifest
-            #$data | to yaml | save -f $"($env.FILE_PWD)/data.yml"
+            let x = (update-version $manifest.defs)
+            $data
+            | upsert versions ($data.versions | merge $x)
+            | to yaml
+            | save -f $"($env.FILE_PWD)/data.yml"
         }
         _ => {
             echo $manifest | to json
