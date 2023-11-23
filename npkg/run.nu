@@ -1,12 +1,23 @@
 #####################
 ###     utils     ###
 #####################
+def is-blank [txt] {
+    ($txt | str replace -ra '\s' '') == ''
+}
+
 def unindent [] {
-    let txt = $in | lines | range 1..-2
+    let txt = $in | lines
+    let ib = if (is-blank $txt.0) { 1 } else { 0 }
+    let ie = if (is-blank ($txt | last)) { -2 } else { -1 }
+    let txt = $txt | range $ib..$ie
     let indent = $txt.0 | parse --regex '^(?P<indent>\s*)' | get indent.0 | str length
     $txt
     | each {|s| $s | str substring $indent.. }
     | str join (char newline)
+}
+
+def cmd-with-args [tmpl] {
+    {|args| do $tmpl ($args | str join ' ') | unindent }
 }
 
 def 'str repeat' [n] {
