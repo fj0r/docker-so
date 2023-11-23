@@ -209,10 +209,10 @@ def acts [] {
     }
 }
 
-def run-other [lv defs arg] {
-    print $"---($arg)"
-    if $lv == 1 {
-        print $"===($arg)"
+def run-other [ctx] {
+    print $"---($ctx.arg)"
+    if $ctx.level == 1 {
+        print $"===($ctx.arg)"
     }
 }
 
@@ -270,7 +270,7 @@ def update-version [manifest] {
     mut data = {}
     for item in ($manifest | transpose k v) {
         let i = $item.v?
-        print $'-------------------($item.k)'
+        print $'==> ($item.k)'
         let url = $i.version?.url?
         let ext = $i.version?.extract
         if not ($url | is-empty) {
@@ -285,44 +285,71 @@ def update-version [manifest] {
 #####################
 ###      run      ###
 #####################
-def run-with-other [os act lv arg defs t] {
-    if $act == 'other' {
-        run-other $lv $defs $arg
+def run-with-other [ctx] {
+    if $ctx.act == 'other' {
+        run-other $ctx
     } else {
-        do ($t | get $os | get $act | get $lv) $arg
+        do ($ctx.actions | get $ctx.os | get $ctx.act | get $ctx.level) $ctx.arg
     }
 }
 
-def run-with-level [os act lv arg defs t] {
-    if $lv == 1 {
+def run-with-level [ctx] {
+    if $ctx.level == 1 {
         let sep = '################################################################################'
         print $sep
-        run-with-other $os $act 0 $arg $defs $t
+        run-with-other ($ctx | upsert level 0)
         print $sep
     }
-    run-with-other $os $act $lv $arg $defs $t
+    run-with-other $ctx
 }
 
-def run [os lv defs data can_ignore act arg?] {
+def run [ctx] {
     let t = (acts)
-    if $can_ignore {
-        if not ($arg | is-empty) {
-            run-with-level $os $act $lv $arg $defs $t
+    if $ctx.can_ignore {
+        if not ($ctx.arg | is-empty) {
+            run-with-level ($ctx | upsert actions $t)
         }
     } else {
-        run-with-level $os $act $lv $arg $defs $t
+        run-with-level ($ctx | upsert actions $t)
     }
 }
 
 def setup [defs data --os-type: string --dry-run] {
     let o = $in
     let lv = if $dry_run { 0 } else { 1 }
-    run $os_type $lv null  null  false setup
-    run $os_type $lv null  null  true  install ($o.require.os? | append $o.use.os?)
-    run $os_type $lv null  null  true  pip $o.require.pip?
-    run $os_type $lv null  null  true  npm $o.require.npm?
-    run $os_type $lv $defs $data true  other $o.require.other?
-    run $os_type $lv null  null  true  teardown $o.use.os?
+    let argt = {
+        os: $os_type
+        level: $lv
+        defs: $defs
+        data: $data
+        can_ignore: true
+        act: null
+        arg: null
+    }
+    run ($argt
+        | upsert can_ignore false
+        | upsert act setup
+        )
+    run ($argt
+        | upsert act install
+        | upsert arg ($o.require.os? | append $o.use.os?)
+        )
+    run ($argt
+        | upsert act pip
+        | upsert arg $o.require.pip?
+        )
+    run ($argt
+        | upsert act npm
+        | upsert arg $o.require.npm?
+        )
+    run ($argt
+        | upsert act other
+        | upsert arg $o.require.other?
+        )
+    run ($argt
+        | upsert act teardown
+        | upsert arg $o.use.os?
+        )
 }
 
 def compos [context: string, offset: int] {
