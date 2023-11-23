@@ -176,10 +176,7 @@ def merge-actions [defs --os-type:string] {
 def acts [] {
     {
         debian: {
-            setup:    {|p| $'
-                apt update
-                apt upgrade
-            '}
+            setup:    {|p| $'apt update; apt upgrade'}
             install:  {|p| $'apt install -y --no-install-recommends ($p)'}
             pip:      {|p| $'pip3 install --break-system-packages --no-cache-dir ($p)'}
             npm:      {|p| $'npm install --location=global ($p)'}
@@ -199,11 +196,16 @@ def acts [] {
             clean:    {|p| $'pacman -R ($p)'}
             teardown: {|p| $'rm -rf /var/cache/pacman/pkg'}
         }
+        alpine: {
+            setup:    {|p| $'echo start'}
+            install:  {|p| $'apk add ($p)'}
+            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
+            npm:      {|p| $'npm install --location=global ($p)'}
+            clean:    {|p| $'apk del ($p)'}
+            teardown: {|p| $'echo stop'}
+        }
         redhat: {
-            setup:    {|p| '
-                yum update
-                yum upgrade
-            '}
+            setup:    {|p| $'yum update; yum upgrade'}
             install:  {|p| $'yum install ($p)'}
             pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
             npm:      {|p| $'npm install --location=global ($p)'}
