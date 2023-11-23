@@ -13,8 +13,8 @@ defs:
                 - unzip:
                     strip: 1
                     filter:
-                      - nu
-                      - nu_plugin_query
+                        - nu
+                        - nu_plugin_query
         config:
             url: https://github.com/fj0r/nushell.git
             post:
@@ -161,11 +161,14 @@ defs:
                 - unzip:
                     filter:
                         - spin
-layers:
+pkgs:
     - name: base
       include:
         - sudo
         - tzdata
+      use:
+        - zstd
+        - curl
     - name: nu
       include:
         - nushell

@@ -58,11 +58,11 @@ def os-type [] {
 ######################
 ###      deps      ###
 ######################
-def calc-deps [field layers comp] {
+def calc-deps [field pkgs comp] {
     let dep = if ($field in $comp) and (not ($comp | get $field | is-empty)) {
-        $layers
+        $pkgs
         | where name in ($comp | get $field)
-        | each {|y| calc-deps $field $layers $y}
+        | each {|y| calc-deps $field $pkgs $y}
         | flatten
     } else {
         []
@@ -381,7 +381,7 @@ def compos [context: string, offset: int] {
         ]
         _ => {
             let manifest = open $"($env.PWD)/manifest.yml"
-            $manifest.layers | get name
+            $manifest.pkgs | get name
         }
     }
 }
@@ -393,12 +393,12 @@ export def main [
     ...args:string@compos
 ] {
     let act = $args.0
-    let layers = $args | range 1..
+    let pkgs = $args | range 1..
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
     let data = open $"($env.FILE_PWD)/data.yml"
     let ostype = (os-type)
-    let pkgs = $manifest.layers
-        | sort-deps $layers
+    let pkgs = $manifest.pkgs
+        | sort-deps $pkgs
         | resolve-pkgs
     match $act {
         resolve-pkgs => {
