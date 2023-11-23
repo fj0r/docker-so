@@ -185,8 +185,16 @@ layers:
       include:
         - rust
         - rust-analyzer
+        - cargo: [cargo-watch, cargo-expand, cargo-eval, cargo-tree]
+        - cargo: [cargo-feature, cargo-prefetch]
+        - cargo: [cargo-wasi]
       require:
         - nvim
+    - name: rust-lib
+      include:
+        - cargo: [quicli, structopt, structopt-yaml]
+      require:
+        - rust
     - name: haskell
       include:
       require:

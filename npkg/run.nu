@@ -177,17 +177,25 @@ def acts [] {
                 {|p| $'npm install --location=global ($p)' | _p}
                 {|p| npm install --location=global $p }
             ]
-            teardown: [
+            clean: [
                 {|p|
                     $'
                     apt remove -y ($p)
+                    ' | unindent | _p
+                }
+                {|p|
+                    apt remove -y ($p)
+                }
+            ]
+            teardown: [
+                {||
+                    $'
                     apt-get autoremove -y
                     apt-get clean -y
                     rm -rf /var/lib/apt/lists/*
                     ' | unindent | _p
                 }
-                {|p|
-                    apt remove -y ($p)
+                {||
                     apt-get autoremove -y
                     apt-get clean -y
                     rm -rf /var/lib/apt/lists/*
@@ -211,9 +219,15 @@ def acts [] {
                {|p| $'npm install --location=global ($p)' | _p }
                {|p| npm install --location=global $p }
             ]
-            teardown: [
+            clean: [
                 {|p| $'pacman -R ($p)' | _p }
                 {|p| pacman -R $p}
+            ]
+            teardown: [
+                {|| $'rm -rf /var/cache/pacman/pkg' | _p }
+                {||
+                    rm -rf /var/cache/pacman/pkg
+                }
             ]
         }
     }
@@ -325,7 +339,14 @@ def run [ctx] {
     }
 }
 
-def setup [defs data --os-type: string --dry-run] {
+def setup [
+    defs
+    data
+    --os-type:string
+    --target:string
+    --cache:bool
+    --dry-run:bool
+] {
     let o = $in
     let lv = if $dry_run { 0 } else { 1 }
     let argt = {
@@ -333,16 +354,19 @@ def setup [defs data --os-type: string --dry-run] {
         level: $lv
         defs: $defs
         data: $data
+        target: $target
+        cache: $cache
         can_ignore: true
         act: null
         arg: null
     }
-    run ($argt | upsert act setup    | upsert can_ignore false )
+    run ($argt | upsert act setup    | upsert can_ignore false)
     run ($argt | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
     run ($argt | upsert act pip      | upsert arg $o.require.pip?)
     run ($argt | upsert act npm      | upsert arg $o.require.npm?)
     run ($argt | upsert act other    | upsert arg $o.require.other?)
-    run ($argt | upsert act teardown | upsert arg $o.use.os?)
+    run ($argt | upsert act clean    | upsert arg $o.use.os?)
+    run ($argt | upsert act teardown | upsert can_ignore false)
 }
 
 def compos [context: string, offset: int] {
@@ -351,7 +375,6 @@ def compos [context: string, offset: int] {
         1 => [
             resolve-pkgs
             merge-actions
-            show-actions
             setup
             test-debian
             update-version
@@ -365,6 +388,7 @@ def compos [context: string, offset: int] {
 
 export def main [
     --cache
+    --dry-run
     --target: string
     ...args:string@compos
 ] {
@@ -385,20 +409,15 @@ export def main [
             | merge-actions $manifest.defs --os-type $ostype
             | to yaml
         }
-        show-actions => {
-            $pkgs
-            | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type $ostype --dry-run
-        }
         setup => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type $ostype
+            | setup $manifest.defs $data --os-type $ostype --target /usr/local --dry-run $dry_run
         }
         test-debian => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type 'debian' --dry-run
+            | setup $manifest.defs $data --os-type 'debian' --dry-run true
         }
         update-version => {
             let x = (update-version $manifest.defs)
