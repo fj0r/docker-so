@@ -303,7 +303,7 @@ def run-with-level [os act lv arg defs t] {
     run-with-other $os $act $lv $arg $defs $t
 }
 
-def run [os lv defs can_ignore act arg?] {
+def run [os lv defs data can_ignore act arg?] {
     let t = (acts)
     if $can_ignore {
         if not ($arg | is-empty) {
@@ -314,15 +314,15 @@ def run [os lv defs can_ignore act arg?] {
     }
 }
 
-def setup [defs --os-type: string --dry-run] {
+def setup [defs data --os-type: string --dry-run] {
     let o = $in
     let lv = if $dry_run { 0 } else { 1 }
-    run $os_type $lv null  false setup
-    run $os_type $lv null  true  install ($o.require.os? | append $o.use.os?)
-    run $os_type $lv null  true  pip $o.require.pip?
-    run $os_type $lv null  true  npm $o.require.npm?
-    run $os_type $lv $defs true  other $o.require.other?
-    run $os_type $lv null  true  teardown $o.use.os?
+    run $os_type $lv null  null  false setup
+    run $os_type $lv null  null  true  install ($o.require.os? | append $o.use.os?)
+    run $os_type $lv null  null  true  pip $o.require.pip?
+    run $os_type $lv null  null  true  npm $o.require.npm?
+    run $os_type $lv $defs $data true  other $o.require.other?
+    run $os_type $lv null  null  true  teardown $o.use.os?
 }
 
 def compos [context: string, offset: int] {
@@ -364,17 +364,17 @@ export def main [...args:string@compos] {
         show-actions => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs --os-type $ostype --dry-run
+            | setup $manifest.defs $data --os-type $ostype --dry-run
         }
         setup => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs --os-type $ostype
+            | setup $manifest.defs $data --os-type $ostype
         }
         test-debian => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs --os-type 'debian' --dry-run
+            | setup $manifest.defs $data --os-type 'debian' --dry-run
         }
         update-version => {
             let x = (update-version $manifest.defs)
