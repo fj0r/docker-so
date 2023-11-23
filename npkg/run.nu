@@ -136,12 +136,18 @@ def resolve-def [defs require --os-type:string] {
     mut other = []
     mut pip = []
     mut npm = []
+    mut cargo = []
+    mut stack = []
+    mut go = []
     for p in $require {
         if ($p | is-record) {
             for i in ($p | transpose k v) {
                 match $i.k {
                     'pip' => { $pip ++= $i.v }
                     'npm' => { $npm ++= $i.v }
+                    'cargo' => { $cargo ++= $i.v }
+                    'stack' => { $stack ++= $i.v }
+                    'go' => { $go ++= $i.v }
                 }
                 if $i.k == $os_type {
                     $os ++= $i.v
@@ -158,6 +164,9 @@ def resolve-def [defs require --os-type:string] {
         other: $other
         pip: $pip
         npm: $npm
+        cargo: $cargo
+        stack: $stack
+        go: $go
     }
 }
 
@@ -178,6 +187,9 @@ def acts [] {
         debian: {
             setup:    {|p| $'apt update; apt upgrade'}
             install:  {|p| $'apt install -y --no-install-recommends ($p)'}
+            cargo:    {|p| $'cargo install ($p)'}
+            stack:    {|p| $'stack install ($p)'}
+            go:       {|p| $'go install ($p)'}
             pip:      {|p| $'pip3 install --break-system-packages --no-cache-dir ($p)'}
             npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'apt remove -y ($p)'}
@@ -191,6 +203,9 @@ def acts [] {
         arch: {
             setup:    {|p| $'pacman -Syu'}
             install:  {|p| $'pacman -S ($p)'}
+            cargo:    {|p| $'cargo install ($p)'}
+            stack:    {|p| $'stack install ($p)'}
+            go:       {|p| $'go install ($p)'}
             pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
             npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'pacman -R ($p)'}
@@ -199,6 +214,9 @@ def acts [] {
         alpine: {
             setup:    {|p| $'echo start'}
             install:  {|p| $'apk add ($p)'}
+            cargo:    {|p| $'cargo install ($p)'}
+            stack:    {|p| $'stack install ($p)'}
+            go:       {|p| $'go install ($p)'}
             pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
             npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'apk del ($p)'}
@@ -207,6 +225,9 @@ def acts [] {
         redhat: {
             setup:    {|p| $'yum update; yum upgrade'}
             install:  {|p| $'yum install ($p)'}
+            cargo:    {|p| $'cargo install ($p)'}
+            stack:    {|p| $'stack install ($p)'}
+            go:       {|p| $'go install ($p)'}
             pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
             npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'yum remove ($p)'}
@@ -342,9 +363,12 @@ def setup [
     }
     run ($argt | upsert act setup    | upsert can_ignore false)
     run ($argt | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
+    run ($argt | upsert act other    | upsert arg $o.require.other?)
     run ($argt | upsert act pip      | upsert arg $o.require.pip?)
     run ($argt | upsert act npm      | upsert arg $o.require.npm?)
-    run ($argt | upsert act other    | upsert arg $o.require.other?)
+    run ($argt | upsert act cargo    | upsert arg $o.require.cargo?)
+    run ($argt | upsert act stack    | upsert arg $o.require.stack?)
+    run ($argt | upsert act go       | upsert arg $o.require.go?)
     run ($argt | upsert act clean    | upsert arg $o.use.os?)
     run ($argt | upsert act teardown | upsert can_ignore false)
 }
