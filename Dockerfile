@@ -3,7 +3,7 @@ FROM ${BASEIMAGE}
 
 COPY npkg /opt/npkg
 
-RUN nu /opt/npkg/main.nu setup \
+RUN nu /opt/npkg/run.nu setup \
     nu \
     nvim \
     python-utils \

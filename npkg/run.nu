@@ -9,6 +9,16 @@ def unindent [] {
     | str join (char newline)
 }
 
+def 'str repeat' [n] {
+    let o = $in
+    mut a = ''
+    if $n < 1 { return '' }
+    for _ in 1..$n {
+        $a = $"($a)($o)"
+    }
+    $a
+}
+
 def _p [] {
     print $in
 }
@@ -295,7 +305,8 @@ def run-with-other [ctx] {
 
 def run-with-level [ctx] {
     if $ctx.level == 1 {
-        let sep = '################################################################################'
+        print ($"(char newline)" | str repeat 10)
+        let sep = '#' | str repeat 80
         print $sep
         run-with-other ($ctx | upsert level 0)
         print $sep
@@ -326,30 +337,12 @@ def setup [defs data --os-type: string --dry-run] {
         act: null
         arg: null
     }
-    run ($argt
-        | upsert can_ignore false
-        | upsert act setup
-        )
-    run ($argt
-        | upsert act install
-        | upsert arg ($o.require.os? | append $o.use.os?)
-        )
-    run ($argt
-        | upsert act pip
-        | upsert arg $o.require.pip?
-        )
-    run ($argt
-        | upsert act npm
-        | upsert arg $o.require.npm?
-        )
-    run ($argt
-        | upsert act other
-        | upsert arg $o.require.other?
-        )
-    run ($argt
-        | upsert act teardown
-        | upsert arg $o.use.os?
-        )
+    run ($argt | upsert act setup    | upsert can_ignore false )
+    run ($argt | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
+    run ($argt | upsert act pip      | upsert arg $o.require.pip?)
+    run ($argt | upsert act npm      | upsert arg $o.require.npm?)
+    run ($argt | upsert act other    | upsert arg $o.require.other?)
+    run ($argt | upsert act teardown | upsert arg $o.use.os?)
 }
 
 def compos [context: string, offset: int] {
@@ -370,7 +363,11 @@ def compos [context: string, offset: int] {
     }
 }
 
-export def main [...args:string@compos] {
+export def main [
+    --cache
+    --target: string
+    ...args:string@compos
+] {
     let act = $args.0
     let layers = $args | range 1..
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
