@@ -344,10 +344,11 @@ def run [ctx] {
 def setup [
     defs
     data
-    --os-type:string
-    --target:string
-    --cache:bool
-    --dry-run:bool
+    --os-type:  string
+    --target:   string
+    --cache:    bool
+    --dry-run:  bool
+    --clean:    bool
 ] {
     let o = $in
     let argt = {
@@ -369,14 +370,17 @@ def setup [
     run ($argt | upsert act cargo    | upsert arg $o.require.cargo?)
     run ($argt | upsert act stack    | upsert arg $o.require.stack?)
     run ($argt | upsert act go       | upsert arg $o.require.go?)
-    run ($argt | upsert act clean    | upsert arg $o.use.os?)
-    run ($argt | upsert act teardown | upsert can_ignore false)
+    if $clean {
+        run ($argt | upsert act clean    | upsert arg $o.use.os?)
+        run ($argt | upsert act teardown | upsert can_ignore false)
+    }
 }
 
 export def main [
     --cache
     --dry-run
-    --target: string
+    --clean
+    --target: string = '/usr/local'
     ...args:string@compos
 ] {
     let debug = if ($env.DEBUG? | is-empty) { 0 } else { $env.DEBUG | into int }
@@ -396,13 +400,13 @@ export def main [
         setup => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type $ostype --target /usr/local --dry-run $dry_run
+            | setup $manifest.defs $data --os-type $ostype --target $target --dry-run $dry_run --clean $clean
         }
         test-os => {
             let ostype = if ($env.ostype? | is-empty) { 'debian' } else { $env.ostype }
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type $ostype --dry-run true
+            | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean
         }
         update-version => {
             let x = (update-version $manifest.defs)

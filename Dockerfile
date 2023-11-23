@@ -3,7 +3,7 @@ FROM ${BASEIMAGE}
 
 COPY npkg /opt/npkg
 
-RUN nu /opt/npkg/run.nu setup \
+RUN nu /opt/npkg/run.nu setup --clean \
     base \
     nu \
     nvim \
