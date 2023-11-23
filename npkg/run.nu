@@ -23,6 +23,18 @@ def _p [] {
     print $in
 }
 
+def log [title] {
+    let o = $in
+    print $"======($title)======"
+    print ($o | to yaml)
+    print $"======($title)======"
+    print $"(char newline)"
+}
+
+def 'bits check' [bit] {
+    ( $in | bits and  (1 | bits shl $bit) ) > 0
+}
+
 def deduplicate [getter] {
     let list = $in
     mut ex = []
@@ -373,8 +385,6 @@ def compos [context: string, offset: int] {
     let argv = $context | str substring 0..$offset | split row -r "\\s+" | range 1.. | filter {|s| not ($s | str starts-with "-")}
     match ($argv | length) {
         1 => [
-            resolve-pkgs
-            merge-actions
             setup
             test-debian
             update-version
@@ -392,23 +402,20 @@ export def main [
     --target: string
     ...args:string@compos
 ] {
+    let debug = if ($env.DEBUG? | is-empty) { 0 } else { $env.DEBUG | into int }
+    print $"===> $env.DEBUG = ($env.DEBUG?)"
     let act = $args.0
     let needs = $args | range 1..
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
     let data = open $"($env.FILE_PWD)/data.yml"
     let ostype = (os-type)
-    let pkgs = $manifest.pkgs
-        | sort-deps $needs
-        | resolve-pkgs
+    let pkgs = $manifest.pkgs | sort-deps $needs
+    if ($debug | bits check 0) { $pkgs | log 'sort-deps' }
+    let pkgs = $pkgs | resolve-pkgs
+    if ($debug | bits check 1) { $pkgs | log 'resolve-pkgs' }
+    let acts = $pkgs | merge-actions $manifest.defs --os-type $ostype
+    if ($debug | bits check 2) { $acts | log 'merge-actions' }
     match $act {
-        resolve-pkgs => {
-            $pkgs | to yaml
-        }
-        merge-actions => {
-            $pkgs
-            | merge-actions $manifest.defs --os-type $ostype
-            | to yaml
-        }
         setup => {
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
