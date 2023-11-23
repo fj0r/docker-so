@@ -7,7 +7,7 @@ defs:
                 - field: tag_name
                 - trim:
                 - only-nums:
-        assets:
+        download:
             url: https://github.com/nushell/nushell/releases/download/{}/nu-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 - unzip:
@@ -24,7 +24,7 @@ defs:
             url:
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
             extract:
                 - unzip:
@@ -38,7 +38,7 @@ defs:
             url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 - unzip:
@@ -51,7 +51,7 @@ defs:
             url: https://api.github.com/repos/sharkdp/fd/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/sharkdp/fd/releases/latest/download/fd-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 - unzip:
@@ -63,7 +63,7 @@ defs:
             url: https://api.github.com/repos/mikefarah/yq/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz
             cache: yq-{}_linux_amd64.tar.gz
             extract:
@@ -75,7 +75,7 @@ defs:
             url: https://api.github.com/repos/bootandy/dust/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/bootandy/dust/releases/latest/download/dust-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 - unzip:
@@ -87,7 +87,7 @@ defs:
             url: https://api.github.com/repos/casey/just/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/casey/just/releases/latest/download/just-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 - unzip:
@@ -98,7 +98,7 @@ defs:
             url: https://api.github.com/repos/jacobdeichert/mask/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-{}-x86_64-unknown-linux-musl.zip
             extract:
                 - unzip:
@@ -109,7 +109,7 @@ defs:
             url: https://api.github.com/repos/watchexec/watchexec/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/watchexec/watchexec/releases/latest/download/watchexec-{}-x86_64-unknown-linux-gnu.tar.xz
             extract:
                 - unzip:
@@ -121,7 +121,7 @@ defs:
             url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/ClementTsang/bottom/releases/latest/download/bottom_x86_64-unknown-linux-musl.tar.gz
             cache: bottom-{}_x86_64-unknown-linux-musl.tar.gz
             extract:
@@ -133,7 +133,7 @@ defs:
             url: https://api.github.com/repos/imsnif/bandwhich/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/imsnif/bandwhich/releases/download/{}/bandwhich-{}-x86_64-unknown-linux-musl.tar.gz
             extract:
                 - unzip:
@@ -143,7 +143,7 @@ defs:
             url: https://api.github.com/repos/bytecodealliance/wasmtime/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-{}-x86_64-linux.tar.xz
             extract:
                 - unzip:
@@ -155,7 +155,7 @@ defs:
             url: https://api.github.com/repos/fermyon/spin/releases/latest
             extract:
                 - github:
-        assets:
+        download:
             url: https://github.com/fermyon/spin/releases/download/{}/spin-{}-linux-amd64.tar.gz
             extract:
                 - unzip:

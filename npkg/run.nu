@@ -61,7 +61,11 @@ def os-type [] {
         $acc | upsert $a.0 ($a.1| str replace -a '"' '')
     }
     if 'ID_LIKE' in $info {
-        $info.ID_LIKE
+        if not ($info.ID_LIKE | parse -r '(rhel|fedora|redhat)' | is-empty) {
+            'redhat'
+        } else {
+            $info.ID_LIKE
+        }
     } else {
         $info.ID
     }
@@ -239,6 +243,38 @@ def acts [] {
                 {|| $'rm -rf /var/cache/pacman/pkg' | _p }
                 {||
                     rm -rf /var/cache/pacman/pkg
+                }
+            ]
+        }
+        redhat: {
+            setup: [
+                {|| '
+                    yum update
+                    yum upgrade
+                    '
+                    | unindent | _p }
+                {|| pacman -Syu }
+            ]
+            install: [
+                {|p| $'yum install ($p)' | _p }
+                {|p| yum install $p }
+            ]
+            pip: [
+                {|p| $'pip3 install --no-cache-dir ($p)' | _p }
+                {|p| pip3 install --no-cache-dir $p }
+            ]
+            npm: [
+               {|p| $'npm install --location=global ($p)' | _p }
+               {|p| npm install --location=global $p }
+            ]
+            clean: [
+                {|p| $'yum remove ($p)' | _p }
+                {|p| yum remove $p}
+            ]
+            teardown: [
+                {|| $'yum clean all' | _p }
+                {||
+                    yum clean all
                 }
             ]
         }
