@@ -167,8 +167,8 @@ pkgs:
         - sudo
         - tzdata
       use:
-        - zstd
-        - curl
+        - zip
+        - http
     - name: nu
       include:
         - nushell
@@ -226,7 +226,7 @@ pkgs:
     - name: http
       include:
         - curl
-        - deb: [ca-certificates]
+        - debian: ca-certificates
     - name: ssh
       include:
         - rsync

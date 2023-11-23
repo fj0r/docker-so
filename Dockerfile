@@ -6,5 +6,6 @@ COPY npkg /opt/npkg
 RUN nu /opt/npkg/run.nu setup \
     nu \
     nvim \
+    http \
     python-utils \
     search

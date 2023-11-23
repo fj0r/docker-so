@@ -4,7 +4,7 @@ export def main [...args:string@compos] {
             nerdctl build -t fj0rd/so:test .
         }
         test => {
-            nu npkg/run.nu test-debian base nu nvim python-utils search
+            nu npkg/run.nu test-debian base nu nvim http python-utils search
         }
         update => {
             nu npkg/run.nu update-version

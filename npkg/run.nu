@@ -393,12 +393,12 @@ export def main [
     ...args:string@compos
 ] {
     let act = $args.0
-    let pkgs = $args | range 1..
+    let needs = $args | range 1..
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
     let data = open $"($env.FILE_PWD)/data.yml"
     let ostype = (os-type)
     let pkgs = $manifest.pkgs
-        | sort-deps $pkgs
+        | sort-deps $needs
         | resolve-pkgs
     match $act {
         resolve-pkgs => {
