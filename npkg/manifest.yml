@@ -1,6 +1,5 @@
 defs:
     nushell:
-        type: github
         version:
             url: https://api.github.com/repos/nushell/nushell/releases/latest
             extract:
@@ -18,7 +17,6 @@ defs:
             post:
                 - register nu_plugin_query
     neovim:
-        type: github
         version:
             url:
             extract:
@@ -33,7 +31,6 @@ defs:
             post:
     lua-lsp:
     ripgrep:
-        type: github
         version:
             url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
             extract:
@@ -47,7 +44,6 @@ defs:
                     filter:
                         - rg
     fd:
-        type: github
         version:
             url: https://api.github.com/repos/sharkdp/fd/releases/latest
             extract:
@@ -60,7 +56,6 @@ defs:
                     filter:
                         - fd
     yq:
-        type: github
         version:
             url: https://api.github.com/repos/mikefarah/yq/releases/latest
             extract:
@@ -73,7 +68,6 @@ defs:
                     filter:
                         - {file: yq_linux_amd64, rename: yq}
     dust:
-        type: github
         version:
             url: https://api.github.com/repos/bootandy/dust/releases/latest
             extract:
@@ -87,7 +81,6 @@ defs:
                     filter:
                         - dust
     just:
-        type: github
         version:
             url: https://api.github.com/repos/casey/just/releases/latest
             extract:
@@ -99,7 +92,6 @@ defs:
                     - filter:
                         - just
     mask:
-        type: github
         version:
             url: https://api.github.com/repos/jacobdeichert/mask/releases/latest
             extract:
@@ -111,7 +103,6 @@ defs:
                     filter:
                         - mask
     watchexec:
-        type: github
         version:
             url: https://api.github.com/repos/watchexec/watchexec/releases/latest
             extract:
@@ -124,7 +115,6 @@ defs:
                     filter:
                         - watchexec
     btm:
-        type: github
         version:
             url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
             extract:
@@ -137,7 +127,6 @@ defs:
                     filter:
                         - btm
     bdwh:
-        type: github
         version:
             url: https://api.github.com/repos/imsnif/bandwhich/releases/latest
             extract:
@@ -148,7 +137,6 @@ defs:
                 - unzip:
 
     wasmtime:
-        type: github
         version:
             url: https://api.github.com/repos/bytecodealliance/wasmtime/releases/latest
             extract:
@@ -161,7 +149,6 @@ defs:
                     filter:
                         - wasmtime
     spin:
-        type: github
         version:
             url: https://api.github.com/repos/fermyon/spin/releases/latest
             extract:

@@ -164,8 +164,8 @@ def acts [] {
                 {|p| pip3 install --break-system-packages --no-cache-dir $p }
             ]
             npm: [
-                {|p| $'npm install --location=global ($p)' | _p} 
-                {|p| npm install --location=global $p } 
+                {|p| $'npm install --location=global ($p)' | _p}
+                {|p| npm install --location=global $p }
             ]
             teardown: [
                 {|p|
@@ -198,8 +198,8 @@ def acts [] {
                 {|p| pip3 install --no-cache-dir $p }
             ]
             npm: [
-               {|p| $'npm install --location=global ($p)' | _p } 
-               {|p| npm install --location=global $p } 
+               {|p| $'npm install --location=global ($p)' | _p }
+               {|p| npm install --location=global $p }
             ]
             teardown: [
                 {|p| $'pacman -R ($p)' | _p }
@@ -247,9 +247,7 @@ def extra [input act arg?] {
                 {field: 'tag_name'}
                 {trim: null }
                 {filter-num: null} ]
-            $input
-            | from json
-            | run-extrators $ex
+            run-extrators ($input | from json) $ex
         }
         unzip => {
             print 'no impl!!!!!!!!!!!'
@@ -257,20 +255,32 @@ def extra [input act arg?] {
     }
 }
 
-def run-extrators [extract] {
-    let o = $in
+def run-extrators [input extract] {
     $extract
-    | reduce -f [$o] {|x, acc|
-        let pre = $acc | last
+    | reduce -f $input {|x, acc|
         let r = $x
             | transpose k v
-            | each {|i| extra $pre $i.k $i.v }
+            | each {|i| extra $acc $i.k $i.v }
             | get 0
-        [$r]
+        $r
     }
-    | get 0
 }
 
+def update-version [manifest] {
+    mut data = {}
+    for item in ($manifest.defs | transpose k v) {
+        let i = $item.v?
+        print $'-------------------($item.k)'
+        let url = $i.version?.url?
+        let ext = $i.version?.extract
+        if not ($url | is-empty) {
+            let ver = (run-extrators (curl -sSL $url) $ext)
+            print $ver
+            $data = ($data | upsert $item.k $ver)
+        }
+    }
+    $data
+}
 
 #####################
 ###      run      ###
@@ -367,36 +377,8 @@ export def main [...args:string@compos] {
             | setup $manifest.defs --os-type 'debian' --dry-run
         }
         update-version => {
-            for item in ($manifest.defs | transpose k v) {
-                let i = $item.v?
-                if $i.type? == 'github' {
-                    print $'-------------------($item.k)'
-                    let url = $i.version?.url?
-                    let ext = $i.version?.extract
-                    if not ($url | is-empty) {
-                        print $url
-                        let ver = (curl -sSL $url)
-                        print $ver
-                        #let ver = $ver | run-extrators $ext
-                        $data.versions = ($data.versions | upsert $item.k $ver)
-                    }
-                }
-            }
-            $data | to yaml | save -f $"($env.FILE_PWD)/data.yml"
-        }
-        test-extract => {
-            let x = [
-                {github: null}
-            ]
-            let x1 = [
-                {from-json: null}
-                {field: "tag_name"}
-                {trim: null}
-                {filter-num: null}
-                {prefix: "_"}
-            ]
-            let b = '{"tag_name": "  vx1.2.3.4"}' | run-extrators $x1 | to json
-            print $b
+            update-version $manifest
+            #$data | to yaml | save -f $"($env.FILE_PWD)/data.yml"
         }
         _ => {
             echo $manifest | to json
