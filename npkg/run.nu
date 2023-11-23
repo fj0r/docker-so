@@ -30,10 +30,6 @@ def 'str repeat' [n] {
     $a
 }
 
-def _p [] {
-    print $in
-}
-
 def log [title] {
     let o = $in
     print $"<<<<<< ($title) >>>>>>"
@@ -180,123 +176,45 @@ def merge-actions [defs --os-type:string] {
 def acts [] {
     {
         debian: {
-            setup: [
-                {||
-                    '
-                    apt update
-                    apt upgrade
-                    ' | unindent | _p
-                }
-                {||
-                    apt update
-                    apt upgrade
-                }
-            ]
-            install: [
-                {|p| $'apt install -y --no-install-recommends ($p)' | _p }
-                {|p| apt install -y --no-install-recommends $p }
-            ]
-            pip: [
-                {|p| $'pip3 install --break-system-packages --no-cache-dir ($p)' | _p }
-                {|p| pip3 install --break-system-packages --no-cache-dir $p }
-            ]
-            npm: [
-                {|p| $'npm install --location=global ($p)' | _p}
-                {|p| npm install --location=global $p }
-            ]
-            clean: [
-                {|p|
-                    $'
-                    apt remove -y ($p)
-                    ' | unindent | _p
-                }
-                {|p|
-                    apt remove -y ($p)
-                }
-            ]
-            teardown: [
-                {||
-                    $'
-                    apt-get autoremove -y
-                    apt-get clean -y
-                    rm -rf /var/lib/apt/lists/*
-                    ' | unindent | _p
-                }
-                {||
-                    apt-get autoremove -y
-                    apt-get clean -y
-                    rm -rf /var/lib/apt/lists/*
-                }
-            ]
+            setup:    {|p| $'
+                apt update
+                apt upgrade
+            '}
+            install:  {|p| $'apt install -y --no-install-recommends ($p)'}
+            pip:      {|p| $'pip3 install --break-system-packages --no-cache-dir ($p)'}
+            npm:      {|p| $'npm install --location=global ($p)'}
+            clean:    {|p| $'apt remove -y ($p)'}
+            teardown: {|p| $'
+                apt-get autoremove -y
+                apt-get clean -y
+                rm -rf /var/lib/apt/lists/*
+            '}
+
         }
         arch: {
-            setup: [
-                {|| 'pacman -Syu' | _p }
-                {|| pacman -Syu }
-            ]
-            install: [
-                {|p| $'pacman -S ($p)' | _p }
-                {|p| pacman -S $p }
-            ]
-            pip: [
-                {|p| $'pip3 install --no-cache-dir ($p)' | _p }
-                {|p| pip3 install --no-cache-dir $p }
-            ]
-            npm: [
-               {|p| $'npm install --location=global ($p)' | _p }
-               {|p| npm install --location=global $p }
-            ]
-            clean: [
-                {|p| $'pacman -R ($p)' | _p }
-                {|p| pacman -R $p}
-            ]
-            teardown: [
-                {|| $'rm -rf /var/cache/pacman/pkg' | _p }
-                {||
-                    rm -rf /var/cache/pacman/pkg
-                }
-            ]
+            setup:    {|p| $'pacman -Syu'}
+            install:  {|p| $'pacman -S ($p)'}
+            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
+            npm:      {|p| $'npm install --location=global ($p)'}
+            clean:    {|p| $'pacman -R ($p)'}
+            teardown: {|p| $'rm -rf /var/cache/pacman/pkg'}
         }
         redhat: {
-            setup: [
-                {|| '
-                    yum update
-                    yum upgrade
-                    '
-                    | unindent | _p }
-                {|| pacman -Syu }
-            ]
-            install: [
-                {|p| $'yum install ($p)' | _p }
-                {|p| yum install $p }
-            ]
-            pip: [
-                {|p| $'pip3 install --no-cache-dir ($p)' | _p }
-                {|p| pip3 install --no-cache-dir $p }
-            ]
-            npm: [
-               {|p| $'npm install --location=global ($p)' | _p }
-               {|p| npm install --location=global $p }
-            ]
-            clean: [
-                {|p| $'yum remove ($p)' | _p }
-                {|p| yum remove $p}
-            ]
-            teardown: [
-                {|| $'yum clean all' | _p }
-                {||
-                    yum clean all
-                }
-            ]
+            setup:    {|p| '
+                yum update
+                yum upgrade
+            '}
+            install:  {|p| $'yum install ($p)'}
+            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
+            npm:      {|p| $'npm install --location=global ($p)'}
+            clean:    {|p| $'yum remove ($p)'}
+            teardown: {|p| $'yum clean all'}
         }
     }
 }
 
 def run-other [ctx] {
-    print $"---($ctx.arg)"
-    if $ctx.level == 1 {
-        print $"===($ctx.arg)"
-    }
+    $"print ($ctx.arg)"
 }
 
 
@@ -372,19 +290,21 @@ def run-with-other [ctx] {
     if $ctx.act == 'other' {
         run-other $ctx
     } else {
-        do ($ctx.actions | get $ctx.os | get $ctx.act | get $ctx.level) $ctx.arg
+        do (cmd-with-args ($ctx.actions | get $ctx.os | get $ctx.act)) $ctx.arg
     }
 }
 
 def run-with-level [ctx] {
-    if $ctx.level == 1 {
-        print ($"(char newline)" | str repeat 10)
+    let cmd = (run-with-other $ctx)
+    if $ctx.dry_run {
+        print $cmd
+    } else {
         let sep = '#' | str repeat 80
         print $sep
-        run-with-other ($ctx | upsert level 0)
+        print $cmd
         print $sep
+        nu -c $cmd
     }
-    run-with-other $ctx
 }
 
 def run [ctx] {
@@ -407,10 +327,9 @@ def setup [
     --dry-run:bool
 ] {
     let o = $in
-    let lv = if $dry_run { 0 } else { 1 }
     let argt = {
         os: $os_type
-        level: $lv
+        dry_run: $dry_run
         defs: $defs
         data: $data
         target: $target
