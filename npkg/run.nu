@@ -236,25 +236,35 @@ def acts [] {
     }
 }
 
-def run-other [ctx] {
-    mut x = $""
-    let cache = $ctx.cache
-    let versions = $ctx.data.versions
-    for i in $ctx.arg {
-        let d = ($ctx.defs | get $i).download?
+def resolve-other [defs versions args] {
+    mut x = []
+    for i in $args {
+        let d = ($defs | get $i).download?
         let v = if $i in $versions { $versions | get $i } else { "" }
         if ($d.url? | is-empty) {
-            $x += $"# ($i) not found"
+            $x ++= [{ name: $i }]
         } else {
             let url = $d.url? | str replace -a '{}' $v
             let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
             let file = $file | str replace -a '{}' $v
             let extra = $d.extract?
-            $x += $"# ($i)(char newline)wget -O ($file) -c ($url)"
+            $x ++= [{ name: $i, file: $file, url: $url, extra: $extra }]
         }
-       $x += (char newline)
     }
     $x
+}
+
+def run-other [ctx] {
+    let cache = $ctx.cache
+    resolve-other $ctx.defs $ctx.data.versions $ctx.arg
+    | each {|i|
+        if ($i.url? | is-empty) {
+            $"# ($i.name) [not found]"
+        } else {
+            $"# ($i.name)(char newline)wget -O ($i.file) -c ($i.url)"
+        }
+    }
+    | str join (char newline)
 }
 
 
@@ -343,7 +353,7 @@ def run-with-level [ctx] {
         print $sep
         print $cmd
         print $sep
-        nu -c $cmd
+        sh -c $cmd
     }
 }
 
