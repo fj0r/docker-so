@@ -162,13 +162,15 @@ defs:
                     filter:
                         - spin
 pkgs:
+    - name: default
+      include: []
+      use:
+        - zip
+        - http
     - name: base
       include:
         - sudo
         - tzdata
-      use:
-        - zip
-        - http
     - name: nu
       include:
         - nushell

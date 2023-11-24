@@ -386,7 +386,7 @@ export def main [
     let debug = if ($env.DEBUG? | is-empty) { 0 } else { $env.DEBUG | into int }
     print $"===> $env.DEBUG = ($env.DEBUG?)"
     let act = $args.0
-    let needs = $args | range 1..
+    let needs = $args | range 1.. | prepend default
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
     let data = open $"($env.FILE_PWD)/data.yml"
     let ostype = (os-type)
