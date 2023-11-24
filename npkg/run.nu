@@ -237,7 +237,7 @@ def acts [] {
 }
 
 def run-other [ctx] {
-    $"print ($ctx.arg)"
+    $"# install ($ctx.arg) \(cache:($ctx.cache))"
 }
 
 
@@ -346,7 +346,7 @@ def setup [
     data
     --os-type:  string
     --target:   string
-    --cache:    bool
+    --cache:    string
     --dry-run:  bool
     --clean:    bool
 ] {
@@ -377,9 +377,9 @@ def setup [
 }
 
 export def main [
-    --cache
     --dry-run
     --clean
+    --cache: string
     --target: string = '/usr/local'
     ...args:string@compos
 ] {
@@ -406,7 +406,7 @@ export def main [
             let ostype = if ($env.ostype? | is-empty) { 'debian' } else { $env.ostype }
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean
+            | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean --cache $"($env.PWD)/cache"
         }
         update-version => {
             let x = (update-version $manifest.defs)
