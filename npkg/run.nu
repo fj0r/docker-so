@@ -237,7 +237,24 @@ def acts [] {
 }
 
 def run-other [ctx] {
-    $"# install ($ctx.arg) \(cache:($ctx.cache))"
+    mut x = $""
+    let cache = $ctx.cache
+    let versions = $ctx.data.versions
+    for i in $ctx.arg {
+        let d = ($ctx.defs | get $i).download?
+        let v = if $i in $versions { $versions | get $i } else { "" }
+        if ($d.url? | is-empty) {
+            $x += $"# ($i) not found"
+        } else {
+            let url = $d.url? | str replace -a '{}' $v
+            let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
+            let file = $file | str replace -a '{}' $v
+            let extra = $d.extract?
+            $x += $"# ($i)(char newline)wget -O ($file) -c ($url)"
+        }
+       $x += (char newline)
+    }
+    $x
 }
 
 
