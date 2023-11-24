@@ -42,8 +42,7 @@ defs:
       extract:
       - regexp: Latest LTS Version.*<strong>(.+)</strong>
     download:
-      url: null
-      cache: null
+      url: https://nodejs.org/dist/v{}/node-v{}-linux-x64.tar.xz
       extract:
       - unzip:
           strip: 1
@@ -202,6 +201,10 @@ pkgs:
   - base
   use:
   - git
+- name: nvim-js
+  include:
+  - nvim
+  - javascript-runtime
 - name: rust
   include:
   - rust
@@ -235,7 +238,8 @@ pkgs:
   require:
   - nvim
 - name: javascript-runtime
-  include: null
+  include:
+  - nodejs
 - name: python-runtime
   include:
   - debian:
