@@ -1,318 +1,348 @@
 defs:
-    nushell:
-        version:
-            url: https://api.github.com/repos/nushell/nushell/releases/latest
-            extract:
-                - from-json:
-                - field: tag_name
-                - trim:
-                - only-nums:
-        download:
-            url: https://github.com/nushell/nushell/releases/download/{}/nu-{}-x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-                    strip: 1
-                    filter:
-                        - nu
-                        - nu_plugin_query
-        config:
-            url: https://github.com/fj0r/nushell.git
-            post:
-                - register nu_plugin_query
-    neovim:
-        version:
-            url: https://api.github.com/repos/neovim/neovim/tags
-            extract:
-                - from-json:
-                - index: 0
-                - index: name
-                - only-nums:
-        download:
-            url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-            cache: nvim-{}-linux64.tar.gz
-            extract:
-                - unzip:
-                    strip: 1
-        config:
-            url: https://github.com/fj0r/nvim-lua.git
-            post:
-    nodejs:
-        version:
-            url: https://nodejs.org/en/download/
-            extract:
-                - regexp: 'Latest LTS Version.*<strong>(.+)</strong>'
-        download:
-            url:
-            cache:
-            extract:
-                - unzip:
-                    strip: 1
-    lua-lsp:
-    ripgrep:
-        version:
-            url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{}-x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-                    strip: 1
-                    format: gz
-                    filter:
-                        - rg
-    fd:
-        version:
-            url: https://api.github.com/repos/sharkdp/fd/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/sharkdp/fd/releases/latest/download/fd-{}-x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-                    strip: 1
-                    filter:
-                        - fd
-    yq:
-        version:
-            url: https://api.github.com/repos/mikefarah/yq/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz
-            cache: yq-{}_linux_amd64.tar.gz
-            extract:
-                - unzip:
-                    filter:
-                        - {file: yq_linux_amd64, rename: yq}
-    dust:
-        version:
-            url: https://api.github.com/repos/bootandy/dust/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/bootandy/dust/releases/latest/download/dust-{}-x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-                    strip: 1
-                    filter:
-                        - dust
-    just:
-        version:
-            url: https://api.github.com/repos/casey/just/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/casey/just/releases/latest/download/just-{}-x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-                    - filter:
-                        - just
-    mask:
-        version:
-            url: https://api.github.com/repos/jacobdeichert/mask/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-{}-x86_64-unknown-linux-musl.zip
-            extract:
-                - unzip:
-                    filter:
-                        - mask
-    watchexec:
-        version:
-            url: https://api.github.com/repos/watchexec/watchexec/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/watchexec/watchexec/releases/latest/download/watchexec-{}-x86_64-unknown-linux-gnu.tar.xz
-            extract:
-                - unzip:
-                    strip: 1
-                    filter:
-                        - watchexec
-    btm:
-        version:
-            url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/ClementTsang/bottom/releases/latest/download/bottom_x86_64-unknown-linux-musl.tar.gz
-            cache: bottom-{}_x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-                    filter:
-                        - btm
-    bdwh:
-        version:
-            url: https://api.github.com/repos/imsnif/bandwhich/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/imsnif/bandwhich/releases/download/{}/bandwhich-{}-x86_64-unknown-linux-musl.tar.gz
-            extract:
-                - unzip:
-
-    wasmtime:
-        version:
-            url: https://api.github.com/repos/bytecodealliance/wasmtime/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-{}-x86_64-linux.tar.xz
-            extract:
-                - unzip:
-                    strip: 1
-                    filter:
-                        - wasmtime
-    spin:
-        version:
-            url: https://api.github.com/repos/fermyon/spin/releases/latest
-            extract:
-                - github:
-        download:
-            url: https://github.com/fermyon/spin/releases/download/{}/spin-{}-linux-amd64.tar.gz
-            extract:
-                - unzip:
-                    filter:
-                        - spin
+  nushell:
+    version:
+      url: https://api.github.com/repos/nushell/nushell/releases/latest
+      extract:
+      - from-json: null
+      - field: tag_name
+      - trim: null
+      - only-nums: null
+    download:
+      url: https://github.com/nushell/nushell/releases/download/{}/nu-{}-x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip:
+          strip: 1
+          filter:
+          - nu
+          - nu_plugin_query
+    config:
+      url: https://github.com/fj0r/nushell.git
+      post:
+      - register nu_plugin_query
+  neovim:
+    version:
+      url: https://api.github.com/repos/neovim/neovim/tags
+      extract:
+      - from-json: null
+      - index: 0
+      - index: name
+      - only-nums: null
+    download:
+      url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+      cache: nvim-{}-linux64.tar.gz
+      extract:
+      - unzip:
+          strip: 1
+    config:
+      url: https://github.com/fj0r/nvim-lua.git
+      post: null
+  nodejs:
+    version:
+      url: https://nodejs.org/en/download/
+      extract:
+      - regexp: Latest LTS Version.*<strong>(.+)</strong>
+    download:
+      url: null
+      cache: null
+      extract:
+      - unzip:
+          strip: 1
+  lua-lsp: null
+  ripgrep:
+    version:
+      url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{}-x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip:
+          strip: 1
+          format: gz
+          filter:
+          - rg
+  fd:
+    version:
+      url: https://api.github.com/repos/sharkdp/fd/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/sharkdp/fd/releases/latest/download/fd-{}-x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip:
+          strip: 1
+          filter:
+          - fd
+  yq:
+    version:
+      url: https://api.github.com/repos/mikefarah/yq/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz
+      cache: yq-{}_linux_amd64.tar.gz
+      extract:
+      - unzip:
+          filter:
+          - file: yq_linux_amd64
+            rename: yq
+  dust:
+    version:
+      url: https://api.github.com/repos/bootandy/dust/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/bootandy/dust/releases/latest/download/dust-{}-x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip:
+          strip: 1
+          filter:
+          - dust
+  just:
+    version:
+      url: https://api.github.com/repos/casey/just/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/casey/just/releases/latest/download/just-{}-x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip:
+        - filter:
+          - just
+  mask:
+    version:
+      url: https://api.github.com/repos/jacobdeichert/mask/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-{}-x86_64-unknown-linux-musl.zip
+      extract:
+      - unzip:
+          filter:
+          - mask
+  watchexec:
+    version:
+      url: https://api.github.com/repos/watchexec/watchexec/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/watchexec/watchexec/releases/latest/download/watchexec-{}-x86_64-unknown-linux-gnu.tar.xz
+      extract:
+      - unzip:
+          strip: 1
+          filter:
+          - watchexec
+  btm:
+    version:
+      url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/ClementTsang/bottom/releases/latest/download/bottom_x86_64-unknown-linux-musl.tar.gz
+      cache: bottom-{}_x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip:
+          filter:
+          - btm
+  bdwh:
+    version:
+      url: https://api.github.com/repos/imsnif/bandwhich/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/imsnif/bandwhich/releases/download/{}/bandwhich-{}-x86_64-unknown-linux-musl.tar.gz
+      extract:
+      - unzip: null
+  wasmtime:
+    version:
+      url: https://api.github.com/repos/bytecodealliance/wasmtime/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-{}-x86_64-linux.tar.xz
+      extract:
+      - unzip:
+          strip: 1
+          filter:
+          - wasmtime
+  spin:
+    version:
+      url: https://api.github.com/repos/fermyon/spin/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/fermyon/spin/releases/download/{}/spin-{}-linux-amd64.tar.gz
+      extract:
+      - unzip:
+          filter:
+          - spin
 pkgs:
-    - name: default
-      include: []
-      use:
-        - zip
-        - http
-        - wget
-    - name: base
-      include:
-        - sudo
-        - tzdata
-    - name: nu
-      include:
-        - nushell
-      require:
-        - base
-      use:
-        - git
-    - name: nvim
-      include:
-        - neovim
-        - lua-lsp
-      require:
-        - base
-      use:
-        - git
-    - name: rust
-      include:
-        - rust
-        - rust-analyzer
-        - cargo: [cargo-watch, cargo-expand, cargo-eval, cargo-tree]
-        - cargo: [cargo-feature, cargo-prefetch]
-        - cargo: [cargo-wasi]
-      require:
-        - nvim
-    - name: rust-lib
-      include:
-        - cargo: [quicli, structopt, structopt-yaml]
-      require:
-        - rust
-    - name: haskell
-      include:
-      require:
-        - nvim
-    - name: golang
-      include:
-      require:
-        - nvim
-    - name: javascript-runtime
-      include:
-    - name: python-runtime
-      include:
-        - debian: [python3, python3-pip]
-        - arch: [python, python-pip]
-    - name: python
-      include:
-      require:
-        - nvim
-        - python-runtime
-    - name: search
-      include:
-        - ripgrep
-        - fd
-    - name: http
-      include:
-        - curl
-        - debian: [ca-certificates]
-    - name: wget
-      include:
-        - wget
-    - name: ssh
-      include:
-        - rsync
-    - name: crypto
-      include:
-        - openssl
-        - pwgen
-    - name: python-utils
-      include:
-        - pip: [ipython, debugpy, pydantic, pytest]
-        - pip: [httpx, hydra-core, typer, pyyaml, deepmerge]
-        - pip: [PyParsing, structlog, python-json-logger]
-        - pip: [decorator, more-itertools, cachetools]
-      require:
-        - python-runtime
-    - name: git
-      include:
-        - git
-    - name: json
-      include:
-        - jq
-    - name: yaml
-      include:
-        - yq
-    - name: exec
-      include:
-        - just
-        - mask
-        - watchexec
-    - name: proc
-      include:
-        - procps
-        - htop
-        - btm
-    - name: netadmin
-      include:
-        - tcpdump
-        - socat
-    - name: net
-      include:
-        - inetutils-ping
-        - iproute2
-        - iptables
-        - net-tools
-        - bdwh
-    - name: cron
-      include:
-        - cron
-    - name: sqlite
-      include:
-        - sqlite3
-    - name: file
-      include:
-        - patch
-        - tree
-        - lsof
-        - dust
-    - name: log
-      include:
-        - logrotate
-    - name: zip
-      include:
-        - xz-utils
-        - zstd
-        - zip
-        - unzip
-    - name: s3
-      include:
-        - s3fs
-        - fuse
+- name: default
+  include: []
+  use:
+  - zip
+  - http
+  - wget
+- name: base
+  include:
+  - sudo
+  - tzdata
+- name: nu
+  include:
+  - nushell
+  require:
+  - base
+  use:
+  - git
+- name: nvim
+  include:
+  - neovim
+  - lua-lsp
+  require:
+  - base
+  use:
+  - git
+- name: rust
+  include:
+  - rust
+  - rust-analyzer
+  - cargo:
+    - cargo-watch
+    - cargo-expand
+    - cargo-eval
+    - cargo-tree
+  - cargo:
+    - cargo-feature
+    - cargo-prefetch
+  - cargo:
+    - cargo-wasi
+  require:
+  - nvim
+- name: rust-lib
+  include:
+  - cargo:
+    - quicli
+    - structopt
+    - structopt-yaml
+  require:
+  - rust
+- name: haskell
+  include: null
+  require:
+  - nvim
+- name: golang
+  include: null
+  require:
+  - nvim
+- name: javascript-runtime
+  include: null
+- name: python-runtime
+  include:
+  - debian:
+    - python3
+    - python3-pip
+  - arch:
+    - python
+    - python-pip
+- name: python
+  include: null
+  require:
+  - nvim
+  - python-runtime
+- name: search
+  include:
+  - ripgrep
+  - fd
+- name: http
+  include:
+  - curl
+  - debian:
+    - ca-certificates
+- name: wget
+  include:
+  - wget
+- name: ssh
+  include:
+  - rsync
+- name: crypto
+  include:
+  - openssl
+  - pwgen
+- name: python-utils
+  include:
+  - pip:
+    - ipython
+    - debugpy
+    - pydantic
+    - pytest
+  - pip:
+    - httpx
+    - hydra-core
+    - typer
+    - pyyaml
+    - deepmerge
+  - pip:
+    - PyParsing
+    - structlog
+    - python-json-logger
+  - pip:
+    - decorator
+    - more-itertools
+    - cachetools
+  require:
+  - python-runtime
+- name: git
+  include:
+  - git
+- name: json
+  include:
+  - jq
+- name: yaml
+  include:
+  - yq
+- name: exec
+  include:
+  - just
+  - mask
+  - watchexec
+- name: proc
+  include:
+  - procps
+  - htop
+  - btm
+- name: netadmin
+  include:
+  - tcpdump
+  - socat
+- name: net
+  include:
+  - inetutils-ping
+  - iproute2
+  - iptables
+  - net-tools
+  - bdwh
+- name: cron
+  include:
+  - cron
+- name: sqlite
+  include:
+  - sqlite3
+- name: file
+  include:
+  - patch
+  - tree
+  - lsof
+  - dust
+- name: log
+  include:
+  - logrotate
+- name: zip
+  include:
+  - xz-utils
+  - zstd
+  - zip
+  - unzip
+- name: s3
+  include:
+  - s3fs
+  - fuse
