@@ -21,9 +21,12 @@ defs:
                 - register nu_plugin_query
     neovim:
         version:
-            url: https://api.github.com/repos/neovim/neovim/releases/latest
+            url: https://api.github.com/repos/neovim/neovim/tags
             extract:
-                - github:
+                - from-json:
+                - index: 0
+                - index: name
+                - only-nums:
         download:
             url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
             cache: nvim-{}-linux64.tar.gz
@@ -33,6 +36,17 @@ defs:
         config:
             url: https://github.com/fj0r/nvim-lua.git
             post:
+    nodejs:
+        version:
+            url: https://nodejs.org/en/download/
+            extract:
+                - regexp: 'Latest LTS Version.*<strong>(.+)</strong>'
+        download:
+            url:
+            cache:
+            extract:
+                - unzip:
+                    strip: 1
     lua-lsp:
     ripgrep:
         version:

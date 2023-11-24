@@ -276,6 +276,9 @@ def extra [input act arg?] {
         prefix => {
             $"($arg)($input)"
         }
+        index => {
+            $input | get $arg
+        }
         field => {
             if not ($arg | is-empty) {
                 if $arg in $input {
@@ -289,6 +292,9 @@ def extra [input act arg?] {
         }
         trim => {
             $input | str trim
+        }
+        regexp => {
+            $input | parse -r $arg | get 0?.capture0?
         }
         only-nums => {
             $input | parse -r '(?P<v>[0-9\.]+)' | get 0.v
