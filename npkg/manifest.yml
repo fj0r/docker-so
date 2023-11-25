@@ -16,7 +16,7 @@ defs:
           filter:
           - nu
           - nu_plugin_query
-    setup:
+    config:
       url: https://github.com/fj0r/nushell.git
       post:
       - register nu_plugin_query
@@ -34,7 +34,7 @@ defs:
       extract:
       - unzip:
           strip: 1
-    setup:
+    config:
       url: https://github.com/fj0r/nvim-lua.git
       post: null
   nodejs:

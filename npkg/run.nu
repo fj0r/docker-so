@@ -236,31 +236,31 @@ def acts [] {
     }
 }
 
-def resolve-other [defs versions args] {
-    mut x = []
-    for i in $args {
-        let o = $defs | get $i
-        let d = $o.download?
-        # :TODO:
-        let c = $o.setup?
-        let v = if $i in $versions { $versions | get $i } else { "" }
-        if ($d.url? | is-empty) {
-            $x ++= [{ name: $i }]
-        } else {
-            let url = $d.url? | str replace -a '{}' $v
-            let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
-            let file = $file | str replace -a '{}' $v
-            let extra = $d.extract?
-            $x ++= [{ name: $i, file: $file, url: $url, extra: $extra }]
-        }
+def resolve-other [defs versions name] {
+    let o = $defs | get $name
+    let d = $o.download?
+    # :TODO:
+    let c = $o.config?
+    let v = if $name in $versions { $versions | get $name } else { "" }
+    if ($d.url? | is-empty) {
+        { name: $name }
+    } else {
+        let url = $d.url? | str replace -a '{}' $v
+        let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
+        let file = $file | str replace -a '{}' $v
+        let extra = $d.extract?
+        { name: $name, file: $file, url: $url, extra: $extra }
     }
-    $x
+}
+
+def filter-other [defs versions args] {
+    $args | each {|i| resolve-other $defs $versions $i}
 }
 
 def run-other [ctx] {
     let cache = $ctx.cache?
     let target = $ctx.target
-    resolve-other $ctx.defs $ctx.data.versions $ctx.arg
+    filter-other $ctx.defs $ctx.data.versions $ctx.arg
     | each {|i|
         if ($i.url? | is-empty) {
             $"# ($i.name) [not found]"
@@ -283,6 +283,10 @@ def run-other [ctx] {
     | str join (char newline)
 }
 
+def download-other [ctx] {
+
+}
+
 def unzip-gen-filter [filter target] {
     let nl = (char newline)
     if ($filter | is-empty) { '' } else {
@@ -298,68 +302,71 @@ def unzip-gen-filter [filter target] {
     }
 }
 
+def run-unzip [getter ctx arg] {
+    let gtt = $getter.0
+    let gtd = $getter.1
+    let opt = if ($arg | is-empty ) { {} } else { $arg }
+    let trg = [$ctx.target $opt.wrap?]
+        | filter {|x| not ($x | is-empty)}
+        | path join
+    let fmt = if not ($opt.format? | is-empty) { $opt.format } else {
+        let fn = $ctx.file | split row '.'
+        let zf = $fn | last
+        if ($fn | range (-2..-2) | get 0) == 'tar' {
+            $"tar.($zf)"
+        } else {
+            $zf
+        }
+    }
+    let decmp = match $fmt {
+        'tar.gz'  => $"tar zxf"
+        'tar.zst' => $"zstd -d -T0 | tar xf"
+        'tar.bz2' => $"tar jxf"
+        'tar.xz'  => $"tar Jxf"
+        'gz'      => $"gzip -d"
+        'zst'     => $"zstd -d"
+        'bz2'     => $"bzip2 -d"
+        'xz'      => $"xz -d"
+        'zip'     => $"unzip"
+        _ => "(!unknown format)"
+    }
+    let nl = (char newline)
+    if ($fmt | str starts-with 'tar.') {
+        let s = if ($opt.strip? | is-empty) { '' } else {
+            $"--strip-components=($opt.strip)"
+        }
+        let f = (unzip-gen-filter $opt.filter? $trg)
+        if $f == '' {
+            $"($gtt) | ($decmp) - ($s) -C ($trg)"
+        } else {
+            $"temp_dir=$\(mktemp -d)($nl)($gtt) | ($decmp) - ($s) -C ${temp_dir} ($nl)($f)($nl)rm -rf ${temp_dir}"
+        }
+    } else if $fmt == 'zip' {
+        let f = (unzip-gen-filter $opt.filter? $trg)
+        [ 'opwd=$PWD'
+          'temp_dir=$(mktemp -d)'
+          'cd ${temp_dir}'
+          $'($gtd)'
+          $'($decmp) ($ctx.file)'
+          (if $f == '' {
+            $'mv ${temp_dir}/* ($ctx.target)'
+          } else {
+            $f
+          })
+          'cd ${opwd}'
+          'rm -rf ${temp_dir}'
+        ] | str join $nl
+    } else {
+        let n = if ($opt.filter? | is-empty) { $ctx.name } else { $opt.filter | first }
+        let t = [$trg $n] | path join
+        $"($gtt) | ($decmp) > ($t)"
+    }
+}
+
 def extra [input act arg?] {
     match $act {
         unzip => {
-            let gtt = $input.0.0
-            let gtd = $input.0.1
-            let ctx = $input.1?
-            let opt = if ($arg | is-empty ) { {} } else { $arg }
-            let trg = [$ctx.target $opt.wrap?]
-                | filter {|x| not ($x | is-empty)}
-                | path join
-            let fmt = if not ($opt.format? | is-empty) { $opt.format } else {
-                let fn = $ctx.file | split row '.'
-                let zf = $fn | last
-                if ($fn | range (-2..-2) | get 0) == 'tar' {
-                    $"tar.($zf)"
-                } else {
-                    $zf
-                }
-            }
-            let decmp = match $fmt {
-                'tar.gz'  => $"tar zxf"
-                'tar.zst' => $"zstd -d -T0 | tar xf"
-                'tar.bz2' => $"tar jxf"
-                'tar.xz'  => $"tar Jxf"
-                'gz'      => $"gzip -d"
-                'zst'     => $"zstd -d"
-                'bz2'     => $"bzip2 -d"
-                'xz'      => $"xz -d"
-                'zip'     => $"unzip"
-                _ => "(!unknown format)"
-            }
-            let nl = (char newline)
-            if ($fmt | str starts-with 'tar.') {
-                let s = if ($opt.strip? | is-empty) { '' } else {
-                    $"--strip-components=($opt.strip)"
-                }
-                let f = (unzip-gen-filter $opt.filter? $trg)
-                if $f == '' {
-                    $"($gtt) | ($decmp) - ($s) -C ($trg)"
-                } else {
-                    $"temp_dir=$\(mktemp -d)($nl)($gtt) | ($decmp) - ($s) -C ${temp_dir} ($nl)($f)($nl)rm -rf ${temp_dir}"
-                }
-            } else if $fmt == 'zip' {
-                let f = (unzip-gen-filter $opt.filter? $trg)
-                [ 'opwd=$PWD'
-                  'temp_dir=$(mktemp -d)'
-                  'cd ${temp_dir}'
-                  $'($gtd)'
-                  $'($decmp) ($ctx.file)'
-                  (if $f == '' {
-                    $'mv ${temp_dir}/* ($ctx.target)'
-                  } else {
-                    $f
-                  })
-                  'cd ${opwd}'
-                  'rm -rf ${temp_dir}'
-                ] | str join $nl
-            } else {
-                let n = if ($opt.filter? | is-empty) { $ctx.name } else { $opt.filter | first }
-                let t = [$trg $n] | path join
-                $"($gtt) | ($decmp) > ($t)"
-            }
+            run-unzip $input.0 $input.1? $arg
         }
         from-json => {
             $input | from json
