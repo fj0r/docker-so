@@ -242,7 +242,7 @@ def resolve-other [defs versions args] {
         let o = $defs | get $i
         let d = $o.download?
         # :TODO:
-        let c = $o.config?
+        let c = $o.setup?
         let v = if $i in $versions { $versions | get $i } else { "" }
         if ($d.url? | is-empty) {
             $x ++= [{ name: $i }]
@@ -299,7 +299,7 @@ def extra [input act arg?] {
                 'bz2'     => $"bzip2 -d"
                 'xz'      => $"xz -d"
                 'zip'     => $"unzip"
-                _ => "(!unknow format)"
+                _ => "(!unknown format)"
             }
             if ($fmt | str starts-with 'tar.') {
                 let t = [$ctx.target $opt.wrap?]
@@ -308,24 +308,18 @@ def extra [input act arg?] {
                 let s = if ($opt.strip? | is-empty) { '' } else {
                     $"--strip-components=($opt.strip)"
                 }
-                let fs = if ($opt.filter? | is-empty) { '' } else {
-                    $opt.filter | reduce -f [] {|x, acc|
+                let rn = if ($opt.filter? | is-empty) { '# tar cp' } else {
+                    $opt.filter
+                    | each {|x|
                         if ($x | describe -d | get type) == 'record' {
-                            # file, rename
-                            $acc | append $x.file
+                            $"; mv ${td}/($x.file) ($t)/($x.rename)"
                         } else {
-                            $acc | append $x
+                            $"; mv ${td}/($x) ($t)/($x)"
                         }
                     }
-                    | str join ' '
-                }
-                let rn = if ($opt.filter? | is-empty) { '' } else {
-                    $opt.filter
-                    | filter {|x| ($x | describe -d | get type) == 'record'}
-                    | each {|x| $"; mv ($t)/($x.file) ($t)/($x.rename)"}
                     | str join ''
                 }
-                $"($input.0) | ($decmp) - -C ($t) ($s) ($fs) ($rn)"
+                $"td=$\(mktemp -d); ($input.0) | ($decmp) - -C ${td} ($s)($rn); rm -rf ${td}"
             } else if $fmt == 'zip' {
                 let td = (mktemp -d)
                 $"cd ($td); ($input.0); ($decmp); mv ($td)/* $(ctx.target); rm -rf ($td) "
@@ -422,7 +416,7 @@ def run-with-level [ctx] {
         print $sep
         print $cmd
         print $sep
-        sh -c $cmd
+        sh -c $"set -eux; ($cmd)"
     }
 }
 
