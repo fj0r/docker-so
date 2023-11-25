@@ -3,14 +3,14 @@ export def main [...args:string@compos] {
         build => {
             nerdctl build -t fj0rd/so:test .
         }
-        test => {
-            nu npkg/run.nu test-os --clean nu nvim-js http python-utils search rust
+        gensh => {
+            nu npkg/run.nu gensh --clean nu nvim-js http python-utils search rust
         }
         update => {
-            nu npkg/run.nu update-version
+            nu npkg/run.nu update
         }
-        merge-actions => {
-            nu npkg/run.nu merge-actions base nu nvim python-utils search
+        download => {
+            nu npkg/run.nu download
         }
         _ => {
             echo 'no act'
@@ -19,15 +19,11 @@ export def main [...args:string@compos] {
     }
 }
 
-def compos [context: string, offset: int] {
-    let argv = $context
-        | str substring 0..$offset
-        | split row -r "\\s+"
-        | range 1..
-        | where not ($it | str starts-with "-")
-    match ($argv | length) {
-        1 => [test build merge-actions update]
-        2 => []
-        _ => []
-    }
+def compos [...context: string] {
+    $context | completion-generator positional [
+        { value: gensh, description: 'gen sh -c' }
+        { value: build, description: 'Dockerfile' }
+        { value: update, description: 'versions' }
+        { value: download, description: 'assets' }
+    ]
 }

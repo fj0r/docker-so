@@ -435,18 +435,21 @@ export def main [
             | merge-actions $manifest.defs --os-type $ostype
             | setup $manifest.defs $data --os-type $ostype --target $target --dry-run $dry_run --clean $clean
         }
-        test-os => {
+        gensh => {
             let ostype = if ($env.ostype? | is-empty) { 'debian' } else { $env.ostype }
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
             | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean --cache $"($env.PWD)/cache"
         }
-        update-version => {
+        update => {
             let x = (update-version $manifest.defs)
             $data
             | upsert versions ($data.versions | merge $x)
             | to yaml
             | save -f $"($env.FILE_PWD)/data.yml"
+        }
+        download => {
+            print 'download assets'
         }
         _ => {
             echo $manifest | to json
@@ -456,16 +459,10 @@ export def main [
 }
 
 def compos [context: string, offset: int] {
-    let argv = $context | str substring 0..$offset | split row -r "\\s+" | range 1.. | filter {|s| not ($s | str starts-with "-")}
-    match ($argv | length) {
-        1 => [
-            setup
-            test-os
-            update-version
-        ]
-        _ => {
-            let manifest = open $"($env.PWD)/manifest.yml"
-            $manifest.pkgs | get name
-        }
-    }
+    [$context $offset] | completion-generator positional [
+        { value: gensh, description: 'gen sh -c' }
+        { value: build, description: 'Dockerfile' }
+        { value: update, description: 'versions' }
+        { value: download, description: 'assets' }
+    ]
 }
