@@ -12,6 +12,7 @@ defs:
       extract:
       - unzip:
           strip: 1
+          wrap: bin
           filter:
           - nu
           - nu_plugin_query
@@ -57,7 +58,8 @@ defs:
       extract:
       - unzip:
           strip: 1
-          format: gz
+          wrap: bin
+          format: tar.gz
           filter:
           - rg
   fd:
@@ -70,6 +72,7 @@ defs:
       extract:
       - unzip:
           strip: 1
+          wrap: bin
           filter:
           - fd
   yq:
@@ -82,6 +85,7 @@ defs:
       cache: yq-{}_linux_amd64.tar.gz
       extract:
       - unzip:
+          wrap: bin
           filter:
           - file: yq_linux_amd64
             rename: yq
@@ -95,6 +99,7 @@ defs:
       extract:
       - unzip:
           strip: 1
+          wrap: bin
           filter:
           - dust
   just:
@@ -106,7 +111,8 @@ defs:
       url: https://github.com/casey/just/releases/latest/download/just-{}-x86_64-unknown-linux-musl.tar.gz
       extract:
       - unzip:
-        - filter:
+          wrap: bin
+          filter:
           - just
   mask:
     version:
@@ -117,6 +123,7 @@ defs:
       url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-{}-x86_64-unknown-linux-musl.zip
       extract:
       - unzip:
+          wrap: bin
           filter:
           - mask
   watchexec:
@@ -129,6 +136,7 @@ defs:
       extract:
       - unzip:
           strip: 1
+          wrap: bin
           filter:
           - watchexec
   btm:
@@ -141,6 +149,7 @@ defs:
       cache: bottom-{}_x86_64-unknown-linux-musl.tar.gz
       extract:
       - unzip:
+          wrap: bin
           filter:
           - btm
   bdwh:
@@ -161,6 +170,7 @@ defs:
       url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-{}-x86_64-linux.tar.xz
       extract:
       - unzip:
+          wrap: bin
           strip: 1
           filter:
           - wasmtime
@@ -173,6 +183,7 @@ defs:
       url: https://github.com/fermyon/spin/releases/download/{}/spin-{}-linux-amd64.tar.gz
       extract:
       - unzip:
+          wrap: bin
           filter:
           - spin
 pkgs:

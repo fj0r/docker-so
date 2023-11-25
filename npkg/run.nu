@@ -239,7 +239,10 @@ def acts [] {
 def resolve-other [defs versions args] {
     mut x = []
     for i in $args {
-        let d = ($defs | get $i).download?
+        let o = $defs | get $i
+        let d = $o.download?
+        # :TODO:
+        let c = $o.config?
         let v = if $i in $versions { $versions | get $i } else { "" }
         if ($d.url? | is-empty) {
             $x ++= [{ name: $i }]
@@ -256,12 +259,16 @@ def resolve-other [defs versions args] {
 
 def run-other [ctx] {
     let cache = $ctx.cache
+    let target = $ctx.target
     resolve-other $ctx.defs $ctx.data.versions $ctx.arg
     | each {|i|
         if ($i.url? | is-empty) {
             $"# ($i.name) [not found]"
         } else {
-            $"# ($i.name)(char newline)wget -O ($i.file) -c ($i.url)"
+            #let f = $"wget -O ($i.file) -c ($i.url)"
+            let f = $"curl -sSL ($i.url)"
+            let cx = $i | merge {cache: $cache, target: $target}
+            $"# ($i.name)(char newline)(run-extrators [$f $cx] $i.extra)"
         }
     }
     | str join (char newline)
@@ -270,6 +277,65 @@ def run-other [ctx] {
 
 def extra [input act arg?] {
     match $act {
+        unzip => {
+            let ctx = $input.1?
+            let opt = if ($arg | is-empty ) { {} } else { $arg }
+            let fmt = if not ($opt.format? | is-empty) { $opt.format } else {
+                let fn = $ctx.file | split row '.'
+                let zf = $fn | last
+                if ($fn | range (-2..-2) | get 0) == 'tar' {
+                    $"tar.($zf)"
+                } else {
+                    $zf
+                }
+            }
+            let decmp = match $fmt {
+                'tar.gz'  => $"tar zxf"
+                'tar.zst' => $"zstd -d -T0 | tar xf"
+                'tar.bz2' => $"tar jxf"
+                'tar.xz'  => $"tar Jxf"
+                'gz'      => $"gzip -d"
+                'zst'     => $"zstd -d"
+                'bz2'     => $"bzip2 -d"
+                'xz'      => $"xz -d"
+                'zip'     => $"unzip"
+                _ => "(!unknow format)"
+            }
+            if ($fmt | str starts-with 'tar.') {
+                let t = [$ctx.target $opt.wrap?]
+                    | filter {|x| not ($x | is-empty)}
+                    | path join
+                let s = if ($opt.strip? | is-empty) { '' } else {
+                    $"--strip-components=($opt.strip)"
+                }
+                let fs = if ($opt.filter? | is-empty) { '' } else {
+                    $opt.filter | reduce -f [] {|x, acc|
+                        if ($x | describe -d | get type) == 'record' {
+                            # file, rename
+                            $acc | append $x.file
+                        } else {
+                            $acc | append $x
+                        }
+                    }
+                    | str join ' '
+                }
+                let rn = if ($opt.filter? | is-empty) { '' } else {
+                    $opt.filter
+                    | filter {|x| ($x | describe -d | get type) == 'record'}
+                    | each {|x| $"; mv ($t)/($x.file) ($t)/($x.rename)"}
+                    | str join ''
+                }
+                $"($input.0) | ($decmp) - -C ($t) ($s) ($fs) ($rn)"
+            } else if $fmt == 'zip' {
+                let td = (mktemp -d)
+                $"cd ($td); ($input.0); ($decmp); mv ($td)/* $(ctx.target); rm -rf ($td) "
+            } else {
+                let t = [$ctx.target $opt.wrap? $ctx.name]
+                    | filter {|x| not ($x | is-empty)}
+                    | path join
+                $"($input.0) | ($decmp) > ($t)"
+            }
+        }
         from-json => {
             $input | from json
         }
@@ -305,9 +371,6 @@ def extra [input act arg?] {
                 {trim: null }
                 {only-nums: null} ]
             run-extrators ($input | from json) $ex
-        }
-        unzip => {
-            print 'no impl!!!!!!!!!!!'
         }
     }
 }
@@ -417,7 +480,7 @@ export def main [
     ...args:string@compos
 ] {
     let debug = if ($env.DEBUG? | is-empty) { 0 } else { $env.DEBUG | into int }
-    print $"===> $env.DEBUG = ($env.DEBUG?)"
+    print $"#===> $env.DEBUG = ($env.DEBUG?)"
     let act = $args.0
     let needs = $args | range 1.. | prepend default
     let manifest = open $"($env.FILE_PWD)/manifest.yml"
@@ -436,7 +499,7 @@ export def main [
             | setup $manifest.defs $data --os-type $ostype --target $target --dry-run $dry_run --clean $clean
         }
         gensh => {
-            let ostype = if ($env.ostype? | is-empty) { 'debian' } else { $env.ostype }
+            let ostype = if ($args.1? | is-empty) { $ostype } else { $args.1 }
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
             | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean --cache $"($env.PWD)/cache"
@@ -459,8 +522,11 @@ export def main [
 }
 
 def compos [context: string, offset: int] {
+    let pkgs = open $"($env.PWD)/manifest.yml" | get pkgs | get name
     [$context $offset] | completion-generator positional [
-        { value: gensh, description: 'gen sh -c' }
+        { value: gensh, description: 'gen sh -c', next: (
+            [debian arch alpine redhat] | each {|x| { value: $x, next: $pkgs } }
+        ) }
         { value: build, description: 'Dockerfile' }
         { value: update, description: 'versions' }
         { value: download, description: 'assets' }
