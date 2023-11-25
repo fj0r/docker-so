@@ -245,9 +245,9 @@ def resolve-other [defs versions name] {
     if ($d.url? | is-empty) {
         { name: $name }
     } else {
-        let url = $d.url? | str replace -a '{}' $v
+        let url = $d.url? | str replace -a '%v' $v
         let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
-        let file = $file | str replace -a '{}' $v
+        let file = $file | str replace -a '%v' $v
         let extra = $d.extract?
         { name: $name, file: $file, url: $url, extra: $extra }
     }
