@@ -258,7 +258,7 @@ def resolve-other [defs versions args] {
 }
 
 def run-other [ctx] {
-    let cache = $ctx.cache
+    let cache = $ctx.cache?
     let target = $ctx.target
     resolve-other $ctx.defs $ctx.data.versions $ctx.arg
     | each {|i|
@@ -266,7 +266,16 @@ def run-other [ctx] {
             $"# ($i.name) [not found]"
         } else {
             #let f = $"wget -O ($i.file) -c ($i.url)"
-            let f = [$"curl -sSL ($i.url)" $"curl -sSLo ($i.file) ($i.url)"]
+            let f = if ($cache | is-empty) {
+                [$"curl -sSL ($i.url)" $"curl -sSLo ($i.file) ($i.url)"]
+            } else {
+                let f = [$cache $i.file] | path join
+                if ($cache | find -r '^https?://' | is-empty) {
+                    [$"cat ($f)" $"cp ($f) ($i.file)"]
+                } else {
+                    [$"curl -sSL ($f)" $"curl -sSLo ($i.file) ($f)"]
+                }
+            }
             let cx = $i | merge {cache: $cache, target: $target}
             $"# ($i.name)(char newline)(run-extrators [$f $cx] $i.extra)"
         }
@@ -379,7 +388,7 @@ def extra [input act arg?] {
             $input | parse -r $arg | get 0?.capture0?
         }
         only-nums => {
-            $input | parse -r '(?P<v>[0-9\.]+)' | get 0.v
+            $input | parse -r '(?P<v>[0-9\.]+)' | get 0?.v?
         }
         github => {
             let ex = [
@@ -518,7 +527,7 @@ export def main [
             let ostype = if ($args.1? | is-empty) { $ostype } else { $args.1 }
             $pkgs
             | merge-actions $manifest.defs --os-type $ostype
-            | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean --cache $"($env.PWD)/cache"
+            | setup $manifest.defs $data --os-type $ostype --target $target --dry-run true --clean $clean --cache $cache
         }
         update => {
             let x = (update-version $manifest.defs)
