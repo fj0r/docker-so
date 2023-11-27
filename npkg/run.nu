@@ -283,8 +283,25 @@ def run-other [ctx] {
     | str join (char newline)
 }
 
-def download-other [ctx] {
-
+def download-other [defs versions --cache:string] {
+    $defs
+    | columns
+    | each {|i| resolve-other $defs $versions $i}
+    | each {|i|
+        if ($i.url? | is-empty) {
+            print '#($i.name)'
+        } else {
+            let t = [$cache $i.file] | filter {|x| not ($x | is-empty) } | path join
+            if ($cache | find -r '^https?://' | is-empty) {
+                wget -c ($i.url) -O ($t)
+            } else {
+                let lt = ['/tmp' $i.file] | path join
+                wget -c ($i.url) -O ($lt)
+                curl -T ($lt) ($t)
+                rm -f ($lt)
+            }
+        }
+    }
 }
 
 def unzip-gen-filter [filter target] {
@@ -544,7 +561,7 @@ export def main [
             | save -f $"($env.FILE_PWD)/data.yml"
         }
         download => {
-            print 'download assets'
+            download-other $manifest.defs $data.versions --cache $cache
         }
         _ => {
             echo $manifest | to json
