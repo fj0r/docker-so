@@ -555,7 +555,7 @@ export def main [
 
 def compos [context: string, offset: int] {
     let pkgs = open $"($env.PWD)/manifest.yml" | get pkgs | get name
-    [$context $offset] | completion-generator positional [
+    [$context $offset] | completion-generator from tree [
         { value: gensh, description: 'gen sh -c', next: (
             [debian arch alpine redhat] | each {|x| { value: $x, next: $pkgs } }
         ) }

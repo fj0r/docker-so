@@ -20,7 +20,7 @@ export def main [...args:string@compos] {
 }
 
 def compos [...context: string] {
-    $context | completion-generator positional [
+    $context | completion-generator from tree [
         { value: gensh, description: 'gen sh -c',
             next: ([debian arch alpine redhat] | wrap value) }
         { value: build, description: 'Dockerfile' }

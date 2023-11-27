@@ -1,7 +1,7 @@
 versions:
   nushell: 0.87.1
   neovim: 0.9.4
-  ripgrep: 13.0.0
+  ripgrep: 14.0.1
   fd: 8.7.1
   yq: 4.40.3
   just: 1.16.0
@@ -13,3 +13,4 @@ versions:
   spin: 2.0.1
   dust: 0.8.6
   nodejs: 20.10.0
+  wstunnel: 8.0.0

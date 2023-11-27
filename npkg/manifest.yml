@@ -186,6 +186,18 @@ defs:
           wrap: bin
           filter:
           - spin
+  wstunnel:
+    version:
+      url: https://api.github.com/repos/erebe/wstunnel/releases/latest
+      extract:
+      - github: null
+    download:
+      url: https://github.com/erebe/wstunnel/releases/download/v%v/wstunnel_%v_linux_amd64.tar.gz
+      extract:
+      - unzip:
+          wrap: bin
+          filter:
+          - wstunnel
 pkgs:
 - name: default
   include: []
