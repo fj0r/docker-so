@@ -5,8 +5,8 @@ COPY npkg /opt/npkg
 
 RUN nu /opt/npkg/run.nu setup --clean \
     base \
-    nu \
     nvim \
     http \
     python-utils \
-    search
+    search \
+    exec

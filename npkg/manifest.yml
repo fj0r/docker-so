@@ -18,6 +18,7 @@ defs:
             - nu-%v-x86_64-linux-musl-full/nu
             - nu-%v-x86_64-linux-musl-full/nu_plugin_query
     - cmd:
+        bin: nu -c
         cwd: /usr/local/bin
         args:
         - register nu_plugin_query
@@ -41,7 +42,7 @@ defs:
             strip: 1
     - git:
         url: https://github.com/fj0r/nvim-lua.git
-        post: null
+        target: /etc/nvim
   nodejs:
     version:
       url: https://nodejs.org/en/download/

@@ -256,20 +256,19 @@ def resolve-other [defs versions name] {
                     let url = $d.url? | resolve-filename $v
                     let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
                     let file = $file | resolve-filename $v
-                    let extra = $d.extract?
                     {
                         type: $r.type
                         name: $name
                         file: $file
                         url: $url
-                        extra: $extra
+                        extract: $d.extract?
                         version: $v
                     }
                 }
             }
             _ => {
                 let d = if ($r.data? | is-empty) { {} } else { $r.data }
-                $d | merge { type: $r.type }
+                $d | merge { type: $r.type, name: $name }
             }
         }
     }
@@ -302,14 +301,25 @@ def run-other [ctx] {
                         }
                     }
                     let cx = $i | merge {cache: $cache, target: $target}
-                    $"# ($i.name)(char newline)(run-extractors [$f $cx] $i.extra)"
+                    [$"# ($i.name)" (run-extractors [$f $cx] $i.extract)]
+                    | str join (char newline)
                 }
             }
             git => {
-                $"# ($i)"
+                [$"# ($i.name)"
+                 $"git clone --depth=2 ($i.url) ($i.target)"
+                ]
+                | str join (char newline)
             }
             cmd => {
-                $"# ($i)"
+                let c = $i.args | str join ' '
+                let c = if ($i.bin? | is-empty) { $c } else { $"($i.bin) '($c)'" }
+                [$"# ($i.name)"
+                 $"pwd; opwd=${PWD}; cd ($i.cwd)"
+                 $c
+                 "cd ${opwd}; pwd"
+                ]
+                | str join (char newline)
             }
         }
     }
@@ -366,8 +376,8 @@ def unzip-gen-filter [filter target version strip] {
                 $"mv ${temp_dir}/($x.file) ($target)/($x.rename)"
             } else {
                 let f = $x | resolve-filename $version
-                    | split row '/' | range $strip.. | str join '/'
-                $"mv ${temp_dir}/($f) ($target)/($f)"
+                let t = $f | split row '/' | range $strip.. | str join '/'
+                $"mv ${temp_dir}/($f) ($target)/($t)"
             }
         }
         | str join $nl
@@ -425,7 +435,7 @@ def run-unzip [getter ctx arg] {
         | str join $nl
     } else if $fmt == 'zip' {
         let f = (unzip-gen-filter $opt.filter? $trg $ctx.version? $opt.strip?)
-        [ 'opwd=$PWD'
+        [ 'opwd=${PWD}'
           'temp_dir=$(mktemp -d)'
           'cd ${temp_dir}'
           $'($gtd)'
