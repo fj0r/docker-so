@@ -236,6 +236,10 @@ def acts [] {
     }
 }
 
+def resolve-filename [version] {
+    $in | str replace -a '%v' $version
+}
+
 def resolve-other [defs versions name] {
     let o = $defs | get $name
     let d = $o.download?
@@ -245,11 +249,11 @@ def resolve-other [defs versions name] {
     if ($d.url? | is-empty) {
         { name: $name }
     } else {
-        let url = $d.url? | str replace -a '%v' $v
+        let url = $d.url? | resolve-filename $v
         let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
-        let file = $file | str replace -a '%v' $v
+        let file = $file | resolve-filename $v
         let extra = $d.extract?
-        { name: $name, file: $file, url: $url, extra: $extra }
+        { name: $name, file: $file, url: $url, extra: $extra, version: $v }
     }
 }
 
@@ -277,7 +281,7 @@ def run-other [ctx] {
                 }
             }
             let cx = $i | merge {cache: $cache, target: $target}
-            $"# ($i.name)(char newline)(run-extrators [$f $cx] $i.extra)"
+            $"# ($i.name)(char newline)(run-extractors [$f $cx] $i.extra)"
         }
     }
     | str join (char newline)
@@ -304,15 +308,34 @@ def download-other [defs versions --cache:string] {
     }
 }
 
-def unzip-gen-filter [filter target] {
+def untar-gen-filter [filter target version] {
+    if ($filter | is-empty) { [] } else {
+        $filter
+        | each {|x|
+            if ($x | describe -d | get type) == 'record' {
+                let tf = $x.file | resolve-filename $version
+                let fn = $tf | split row '/' | last
+                let nf = $x.rename | resolve-filename $version
+                [$tf $'($target)/($fn)' $'($target)/($nf)']
+            } else {
+                [($x | resolve-filename $version)]
+            }
+        }
+    }
+}
+
+def unzip-gen-filter [filter target version strip] {
     let nl = (char newline)
+    let strip = if ($strip | is-empty) { 0 } else { $strip }
     if ($filter | is-empty) { '' } else {
         $filter
         | each {|x|
             if ($x | describe -d | get type) == 'record' {
                 $"mv ${temp_dir}/($x.file) ($target)/($x.rename)"
             } else {
-                $"mv ${temp_dir}/($x) ($target)/($x)"
+                let f = $x | resolve-filename $version
+                    | split row '/' | range $strip.. | str join '/'
+                $"mv ${temp_dir}/($f) ($target)/($f)"
             }
         }
         | str join $nl
@@ -352,14 +375,24 @@ def run-unzip [getter ctx arg] {
         let s = if ($opt.strip? | is-empty) { '' } else {
             $"--strip-components=($opt.strip)"
         }
-        let f = (unzip-gen-filter $opt.filter? $trg)
-        if $f == '' {
-            $"($gtt) | ($decmp) - ($s) -C ($trg)"
-        } else {
-            $"temp_dir=$\(mktemp -d)($nl)($gtt) | ($decmp) - ($s) -C ${temp_dir} ($nl)($f)($nl)rm -rf ${temp_dir}"
-        }
+        let f = (untar-gen-filter $opt.filter? $trg $ctx.version?)
+            | reduce -f {fs: [], mv: []} {|x, acc|
+                let acc = if ($x.0? | is-empty) { $acc } else {
+                    $acc | update fs ($acc.fs | append $x.0?)
+                }
+                let acc = if ($x.1? | is-empty) { $acc } else {
+                    $acc | update mv ($acc.mv | append $"mv ($x.1) ($x.2)")
+                }
+                $acc
+            }
+        let u = [$gtt '|' $decmp '-' $s '-C' $trg ($f.fs | str join ' ')]
+        | filter {|x| not ($x | is-empty) }
+        | str join ' '
+        [$u] | append $f.mv |
+        | filter {|x| not ($x | is-empty) }
+        | str join $nl
     } else if $fmt == 'zip' {
-        let f = (unzip-gen-filter $opt.filter? $trg)
+        let f = (unzip-gen-filter $opt.filter? $trg $ctx.version? $opt.strip?)
         [ 'opwd=$PWD'
           'temp_dir=$(mktemp -d)'
           'cd ${temp_dir}'
@@ -380,7 +413,7 @@ def run-unzip [getter ctx arg] {
     }
 }
 
-def extra [input act arg?] {
+def extract [input act arg?] {
     match $act {
         unzip => {
             run-unzip $input.0 $input.1? $arg
@@ -419,17 +452,17 @@ def extra [input act arg?] {
                 {field: 'tag_name'}
                 {trim: null }
                 {only-nums: null} ]
-            run-extrators ($input | from json) $ex
+            run-extractors ($input | from json) $ex
         }
     }
 }
 
-def run-extrators [input extract] {
-    $extract
+def run-extractors [input extractors] {
+    $extractors
     | reduce -f $input {|x, acc|
         let r = $x
             | transpose k v
-            | each {|y| extra $acc $y.k $y.v }
+            | each {|y| extract $acc $y.k $y.v }
             | get 0
         $r
     }
@@ -443,7 +476,7 @@ def update-version [manifest] {
         let url = $i.version?.url?
         let ext = $i.version?.extract
         if not ($url | is-empty) {
-            let ver = (run-extrators (curl -sSL $url) $ext)
+            let ver = (run-extractors (curl -sSL $url) $ext)
             print $ver
             $data = ($data | upsert $item.k $ver)
         }

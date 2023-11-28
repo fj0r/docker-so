@@ -4,7 +4,7 @@ export def main [...args:string@compos] {
             nerdctl build -t fj0rd/so:test .
         }
         gensh => {
-            nu npkg/run.nu gensh $args.1  --clean nu nvim-js http python-utils search rust
+            nu npkg/run.nu gensh $args.1  --clean nu nvim-js exec http python-utils search rust
         }
         update => {
             nu npkg/run.nu update

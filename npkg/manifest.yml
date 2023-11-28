@@ -14,8 +14,8 @@ defs:
           strip: 1
           wrap: bin
           filter:
-          - nu
-          - nu_plugin_query
+          - nu-%v-x86_64-linux-musl-full/nu
+          - nu-%v-x86_64-linux-musl-full/nu_plugin_query
     config:
       url: https://github.com/fj0r/nushell.git
       post:
@@ -61,7 +61,7 @@ defs:
           wrap: bin
           format: tar.gz
           filter:
-          - rg
+          - ripgrep-%v-x86_64-unknown-linux-musl/rg
   fd:
     version:
       url: https://api.github.com/repos/sharkdp/fd/releases/latest
@@ -74,7 +74,7 @@ defs:
           strip: 1
           wrap: bin
           filter:
-          - fd
+          - fd-v%v-x86_64-unknown-linux-musl/fd
   yq:
     version:
       url: https://api.github.com/repos/mikefarah/yq/releases/latest
@@ -101,7 +101,7 @@ defs:
           strip: 1
           wrap: bin
           filter:
-          - dust
+          - dust-v%v-x86_64-unknown-linux-musl/dust
   just:
     version:
       url: https://api.github.com/repos/casey/just/releases/latest
@@ -123,9 +123,11 @@ defs:
       url: https://github.com/jacobdeichert/mask/releases/latest/download/mask-%v-x86_64-unknown-linux-musl.zip
       extract:
       - unzip:
+          format: zip
           wrap: bin
+          strip: 1
           filter:
-          - mask
+          - mask-%v-x86_64-unknown-linux-musl/mask
   watchexec:
     version:
       url: https://api.github.com/repos/watchexec/watchexec/releases/latest
@@ -138,7 +140,7 @@ defs:
           strip: 1
           wrap: bin
           filter:
-          - watchexec
+          - watchexec-%v-x86_64-unknown-linux-gnu/watchexec
   btm:
     version:
       url: https://api.github.com/repos/ClementTsang/bottom/releases/latest
@@ -167,20 +169,20 @@ defs:
       extract:
       - github: null
     download:
-      url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-%v-x86_64-linux.tar.xz
+      url: https://github.com/bytecodealliance/wasmtime/releases/latest/download/wasmtime-v%v-x86_64-linux.tar.xz
       extract:
       - unzip:
           wrap: bin
           strip: 1
           filter:
-          - wasmtime
+          - wasmtime-v%v-x86_64-linux/wasmtime
   spin:
     version:
       url: https://api.github.com/repos/fermyon/spin/releases/latest
       extract:
       - github: null
     download:
-      url: https://github.com/fermyon/spin/releases/download/%v/spin-%v-linux-amd64.tar.gz
+      url: https://github.com/fermyon/spin/releases/download/%v/spin-v%v-linux-amd64.tar.gz
       extract:
       - unzip:
           wrap: bin
