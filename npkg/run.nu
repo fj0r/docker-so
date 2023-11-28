@@ -267,10 +267,9 @@ def resolve-other [defs versions name] {
                     }
                 }
             }
-            git => {
-                {
-                    type: git
-                }
+            _ => {
+                let d = if ($r.data? | is-empty) { {} } else { $r.data }
+                $d | merge { type: $r.type }
             }
         }
     }
@@ -309,30 +308,36 @@ def run-other [ctx] {
             git => {
                 $"# ($i)"
             }
+            cmd => {
+                $"# ($i)"
+            }
         }
     }
     | str join (char newline)
 }
 
 def download-other [defs versions --cache:string] {
-    $defs
-    | columns
-    | each {|i| resolve-other $defs $versions $i}
-    | each {|i|
-        if ($i.url? | is-empty) {
-            print '#($i.name)'
-        } else {
-            let t = [$cache $i.file] | filter {|x| not ($x | is-empty) } | path join
-            if ($cache | find -r '^https?://' | is-empty) {
-                wget -c ($i.url) -O ($t)
-            } else {
-                let lt = ['/tmp' $i.file] | path join
-                wget -c ($i.url) -O ($lt)
-                curl -T ($lt) ($t)
-                rm -f ($lt)
+    mkdir /tmp/npkg
+    for y in ($defs | columns | each {|x| resolve-other $defs $versions $x}) {
+        for i in $y {
+            if $i.type == 'download' {
+                if ($i.url? | is-empty) {
+                    print $'# ($i.name)'
+                } else {
+                    print $'# download ($i.file)'
+                    let t = [$cache $i.file] | filter {|x| not ($x | is-empty) } | path join
+                    if ($cache | find -r '^https?://' | is-empty) {
+                        wget -c ($i.url) -O ($t)
+                    } else {
+                        let lt = ['/tmp/npkg' $i.file] | path join
+                        wget -c ($i.url) -O ($lt)
+                        curl -T ($lt) ($t)
+                    }
+                }
             }
         }
     }
+    rm -rf /tmp/npkg
 }
 
 def untar-gen-filter [filter target version] {

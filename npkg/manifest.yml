@@ -9,7 +9,7 @@ defs:
       - only-nums: null
     install:
     - download:
-        url: https://github.com/nushell/nushell/releases/download/%v/nu-%v-x86_64-unknown-linux-musl.tar.gz
+        url: https://github.com/nushell/nushell/releases/download/%v/nu-%v-x86_64-linux-musl-full.tar.gz
         extract:
         - unzip:
             strip: 1
@@ -17,10 +17,13 @@ defs:
             filter:
             - nu-%v-x86_64-linux-musl-full/nu
             - nu-%v-x86_64-linux-musl-full/nu_plugin_query
+    - cmd:
+        cwd: /usr/local/bin
+        args:
+        - register nu_plugin_query
     - git:
         url: https://github.com/fj0r/nushell.git
-        post:
-        - register nu_plugin_query
+        target: /etc/nushell
   neovim:
     version:
       url: https://api.github.com/repos/neovim/neovim/tags
@@ -102,7 +105,7 @@ defs:
       - github: null
     install:
     - download:
-        url: https://github.com/bootandy/dust/releases/latest/download/dust-%v-x86_64-unknown-linux-musl.tar.gz
+        url: https://github.com/bootandy/dust/releases/download/v%v/dust-v%v-x86_64-unknown-linux-musl.tar.gz
         extract:
         - unzip:
             strip: 1
@@ -116,7 +119,7 @@ defs:
       - github: null
     install:
     - download:
-        url: https://github.com/casey/just/releases/latest/download/just-%v-x86_64-unknown-linux-musl.tar.gz
+        url: https://github.com/casey/just/releases/download/%v/just-%v-x86_64-unknown-linux-musl.tar.gz
         extract:
         - unzip:
             wrap: bin
@@ -172,7 +175,7 @@ defs:
       - github: null
     install:
     - download:
-        url: https://github.com/imsnif/bandwhich/releases/download/%v/bandwhich-%v-x86_64-unknown-linux-musl.tar.gz
+        url: https://github.com/imsnif/bandwhich/releases/download/v%v/bandwhich-v%v-x86_64-unknown-linux-musl.tar.gz
         extract:
         - unzip: null
   wasmtime:
@@ -196,7 +199,7 @@ defs:
       - github: null
     install:
     - download:
-        url: https://github.com/fermyon/spin/releases/download/%v/spin-v%v-linux-amd64.tar.gz
+        url: https://github.com/fermyon/spin/releases/download/v%v/spin-v%v-linux-amd64.tar.gz
         extract:
         - unzip:
             wrap: bin
