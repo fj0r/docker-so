@@ -255,7 +255,8 @@ pkgs:
   include:
   - build-essential
 - name: nvim-js
-  include:
+  include: []
+  require:
   - nvim
   - javascript-runtime
 - name: rust

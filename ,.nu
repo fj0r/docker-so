@@ -4,13 +4,16 @@ export def main [...args:string@compos] {
             nerdctl build -t fj0rd/so:test .
         }
         gensh => {
-            nu npkg/run.nu gensh $args.1  --clean nu nvim-js exec http python-utils search rust
+            nu npkg/run.nu gensh $args.1  --clean nu nvim-js exec http
         }
         update => {
             nu npkg/run.nu update
         }
         download => {
             nu npkg/run.nu download --cache http://file.s/npkg
+        }
+        debug => {
+            nu npkg/run.nu debug nu nvim-js exec http
         }
         _ => {
             echo 'no act'
@@ -26,5 +29,6 @@ def compos [...context: string] {
         { value: build, description: 'Dockerfile' }
         { value: update, description: 'versions' }
         { value: download, description: 'assets' }
+        { value: debug, description: 'xxx' }
     ]
 }

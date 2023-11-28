@@ -81,11 +81,11 @@ def os-type [] {
 ######################
 ###      deps      ###
 ######################
-def calc-deps [field pkgs comp] {
-    let dep = if ($field in $comp) and (not ($comp | get $field | is-empty)) {
+def calc-dep-require [pkgs comp] {
+    let dep = if not ($comp.require? | is-empty) {
         $pkgs
-        | where name in ($comp | get $field)
-        | each {|y| calc-deps $field $pkgs $y}
+        | where name in $comp.require
+        | each {|y| calc-dep-require $pkgs $y}
         | flatten
     } else {
         []
@@ -93,16 +93,32 @@ def calc-deps [field pkgs comp] {
     $comp | append $dep
 }
 
+def calc-dep-use [pkgs comp] {
+    let r = if ($comp.require? | is-empty) { [] } else { $comp.require }
+    let r = $r | append (if ($comp.use? | is-empty) { [] } else { $comp.use })
+    $comp
+    | append (
+        if ($r | is-empty) {
+            []
+        } else {
+            $pkgs
+            | where name in $r
+            | each {|y| calc-dep-use $pkgs $y}
+            | flatten
+        }
+    )
+}
+
 def sort-deps [cs] {
     let o = $in
     let r = $o
         | where name in $cs
-        | each {|y| calc-deps 'require' $o $y }
+        | each {|y| calc-dep-require $o $y }
         | flatten
         | deduplicate {|y| $y.name }
     let u = $o
         | where name in $cs
-        | each {|y| calc-deps 'use' $o $y }
+        | each {|y| calc-dep-use $o $y }
         | flatten
         | deduplicate {|y| $y.name }
     {
@@ -301,12 +317,12 @@ def run-other [ctx] {
                         }
                     }
                     let cx = $i | merge {cache: $cache, target: $target}
-                    [$"# ($i.name)" (run-extractors [$f $cx] $i.extract)]
+                    [$"### download ($i.name)" (run-extractors [$f $cx] $i.extract)]
                     | str join (char newline)
                 }
             }
             git => {
-                [$"# ($i.name)"
+                [$"### git ($i.name)"
                  $"git clone --depth=2 ($i.url) ($i.target)"
                 ]
                 | str join (char newline)
@@ -314,7 +330,7 @@ def run-other [ctx] {
             shell => {
                 let c = $i.cmd | str join (char newline)
                 let c = if ($i.exec? | is-empty) { $c } else { $"($i.exec) '($c)'" }
-                [$"# ($i.name)"
+                [$"### shell ($i.name)"
                  $"pwd; opwd=${PWD}; cd ($i.workdir)"
                  $c
                  "cd ${opwd}; pwd"
@@ -638,6 +654,9 @@ export def main [
         }
         download => {
             download-other $manifest.defs $data.versions --cache $cache
+        }
+        debug => {
+            $manifest.pkgs | sort-deps1 $needs | log
         }
         _ => {
             echo $manifest | to json
