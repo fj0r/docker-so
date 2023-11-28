@@ -17,10 +17,10 @@ defs:
             filter:
             - nu-%v-x86_64-linux-musl-full/nu
             - nu-%v-x86_64-linux-musl-full/nu_plugin_query
-    - cmd:
-        bin: nu -c
-        cwd: /usr/local/bin
-        args:
+    - shell:
+        exec: nu -c
+        workdir: /usr/local/bin
+        cmd:
         - register nu_plugin_query
     - git:
         url: https://github.com/fj0r/nushell.git
@@ -43,6 +43,10 @@ defs:
     - git:
         url: https://github.com/fj0r/nvim-lua.git
         target: /etc/nvim
+    - shell:
+        workdir: /etc/nvim
+        cmd:
+        - nvim --headless "+Lazy! sync" +qa
   nodejs:
     version:
       url: https://nodejs.org/en/download/
@@ -243,8 +247,13 @@ pkgs:
   - lua-lsp
   require:
   - base
-  use:
   - git
+  - find
+  use:
+  - devkit
+- name: devkit
+  include:
+  - build-essential
 - name: nvim-js
   include:
   - nvim
@@ -297,7 +306,7 @@ pkgs:
   require:
   - nvim
   - python-runtime
-- name: search
+- name: find
   include:
   - ripgrep
   - fd

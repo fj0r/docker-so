@@ -8,5 +8,5 @@ RUN nu /opt/npkg/run.nu setup --clean \
     nvim \
     http \
     python-utils \
-    search \
+    find \
     exec

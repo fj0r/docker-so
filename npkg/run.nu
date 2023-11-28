@@ -311,11 +311,11 @@ def run-other [ctx] {
                 ]
                 | str join (char newline)
             }
-            cmd => {
-                let c = $i.args | str join ' '
-                let c = if ($i.bin? | is-empty) { $c } else { $"($i.bin) '($c)'" }
+            shell => {
+                let c = $i.cmd | str join (char newline)
+                let c = if ($i.exec? | is-empty) { $c } else { $"($i.exec) '($c)'" }
                 [$"# ($i.name)"
-                 $"pwd; opwd=${PWD}; cd ($i.cwd)"
+                 $"pwd; opwd=${PWD}; cd ($i.workdir)"
                  $c
                  "cd ${opwd}; pwd"
                 ]
