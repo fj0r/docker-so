@@ -30,7 +30,7 @@ def 'str repeat' [n] {
     $a
 }
 
-def log [title] {
+def log [title=''] {
     let o = $in
     print $"<<<<<< ($title) >>>>>>"
     print ($o | to yaml)
@@ -241,19 +241,38 @@ def resolve-filename [version] {
 }
 
 def resolve-other [defs versions name] {
-    let o = $defs | get $name
-    let d = $o.download?
-    # :TODO:
-    let c = $o.config?
     let v = if $name in $versions { $versions | get $name } else { "" }
-    if ($d.url? | is-empty) {
-        { name: $name }
-    } else {
-        let url = $d.url? | resolve-filename $v
-        let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
-        let file = $file | resolve-filename $v
-        let extra = $d.extract?
-        { name: $name, file: $file, url: $url, extra: $extra, version: $v }
+    let ins = ($defs | get $name).install?
+    let ins = if ($ins | is-empty) { [] } else { $ins }
+    $ins
+    | each {|i|
+        let r = $i | record-to-struct type data
+        match $r.type {
+            download => {
+                let d = $r.data?
+                if ($d.url? | is-empty) {
+                    { name: $name }
+                } else {
+                    let url = $d.url? | resolve-filename $v
+                    let file = if ('cache' in $d) { $d.cache } else {  $url | split row '/' | last }
+                    let file = $file | resolve-filename $v
+                    let extra = $d.extract?
+                    {
+                        type: $r.type
+                        name: $name
+                        file: $file
+                        url: $url
+                        extra: $extra
+                        version: $v
+                    }
+                }
+            }
+            git => {
+                {
+                    type: git
+                }
+            }
+        }
     }
 }
 
@@ -265,23 +284,31 @@ def run-other [ctx] {
     let cache = $ctx.cache?
     let target = $ctx.target
     filter-other $ctx.defs $ctx.data.versions $ctx.arg
+    | flatten
     | each {|i|
-        if ($i.url? | is-empty) {
-            $"# ($i.name) [not found]"
-        } else {
-            #let f = $"wget -O ($i.file) -c ($i.url)"
-            let f = if ($cache | is-empty) {
-                [$"curl -sSL ($i.url)" $"curl -sSLo ($i.file) ($i.url)"]
-            } else {
-                let f = [$cache $i.file] | path join
-                if ($cache | find -r '^https?://' | is-empty) {
-                    [$"cat ($f)" $"cp ($f) ($i.file)"]
+        match $i.type {
+            download => {
+                if ($i.url? | is-empty) {
+                    $"# ($i.name) [not found]"
                 } else {
-                    [$"curl -sSL ($f)" $"curl -sSLo ($i.file) ($f)"]
+                    #let f = $"wget -O ($i.file) -c ($i.url)"
+                    let f = if ($cache | is-empty) {
+                        [$"curl -sSL ($i.url)" $"curl -sSLo ($i.file) ($i.url)"]
+                    } else {
+                        let f = [$cache $i.file] | path join
+                        if ($cache | find -r '^https?://' | is-empty) {
+                            [$"cat ($f)" $"cp ($f) ($i.file)"]
+                        } else {
+                            [$"curl -sSL ($f)" $"curl -sSLo ($i.file) ($f)"]
+                        }
+                    }
+                    let cx = $i | merge {cache: $cache, target: $target}
+                    $"# ($i.name)(char newline)(run-extractors [$f $cx] $i.extra)"
                 }
             }
-            let cx = $i | merge {cache: $cache, target: $target}
-            $"# ($i.name)(char newline)(run-extractors [$f $cx] $i.extra)"
+            git => {
+                $"# ($i)"
+            }
         }
     }
     | str join (char newline)
@@ -457,14 +484,15 @@ def extract [input act arg?] {
     }
 }
 
+def record-to-struct [$k $v] {
+    $in | transpose $k $v | get 0
+}
+
 def run-extractors [input extractors] {
     $extractors
     | reduce -f $input {|x, acc|
-        let r = $x
-            | transpose k v
-            | each {|y| extract $acc $y.k $y.v }
-            | get 0
-        $r
+        let r = $x | record-to-struct k v
+        extract $acc $r.k $r.v
     }
 }
 
