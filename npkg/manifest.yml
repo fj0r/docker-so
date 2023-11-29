@@ -326,11 +326,11 @@ pkgs:
   - debian:
     - python3
     - python3-pip
-  - arch:
+    arch:
     - python
     - python-pip
 - name: python
-  include: null
+  include: []
   require:
   - nvim
   - python-runtime
