@@ -15,3 +15,4 @@ versions:
   nodejs: 20.10.0
   wstunnel: 8.0.0
   rust-analyzer: 2023-11-27
+  lsp-lua: 3.7.3

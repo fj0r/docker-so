@@ -48,6 +48,16 @@ defs:
         workdir: /etc/nvim
         cmd:
         - nvim --headless "+Lazy! sync" +qa
+  lsp-lua:
+    version:
+      url: https://api.github.com/repos/LuaLS/lua-language-server/releases/latest
+      extract:
+      - github:
+    install:
+    - download:
+        url: https://github.com/LuaLS/lua-language-server/releases/download/%v/lua-language-server-%v-linux-x64-musl.tar.gz
+        extract:
+        - unzip:
   nodejs:
     version:
       url: https://nodejs.org/en/download/
@@ -262,7 +272,7 @@ pkgs:
 - name: nvim
   include:
   - neovim
-  - lua-lsp
+  - lsp-lua
   require:
   - base
   - git
