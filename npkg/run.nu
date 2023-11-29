@@ -504,7 +504,7 @@ def extract [input act arg?] {
             $input | parse -r $arg | get 0?.capture0?
         }
         only-nums => {
-            $input | parse -r '(?P<v>[0-9\.]+)' | get 0?.v?
+            $input | parse -r '(?P<v>[0-9\.\-]+)' | get 0?.v?
         }
         github => {
             let ex = [

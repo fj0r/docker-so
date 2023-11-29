@@ -59,7 +59,24 @@ defs:
         extract:
         - unzip:
             strip: 1
-  lua-lsp:
+  rust:
+  rust-analyzer:
+    version:
+      url: https://api.github.com/repos/rust-lang/rust-analyzer/releases/latest
+      extract:
+      - github: null
+    install:
+    - download:
+        url: https://github.com/rust-lang/rust-analyzer/releases/download/%v/rust-analyzer-x86_64-unknown-linux-musl.gz
+        extract:
+        - unzip:
+            wrap: bin
+            filter:
+            - rust-analyzer
+    - shell:
+        workdir: /usr/local/bin
+        cmd:
+        - chmod +x rust-analyzer
   ripgrep:
     version:
       url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest
@@ -263,7 +280,6 @@ pkgs:
 - name: rust
   include:
   - rust
-  - rust-analyzer
   - cargo:
     - cargo-watch
     - cargo-expand
@@ -308,6 +324,26 @@ pkgs:
   require:
   - nvim
   - python-runtime
+- name: lsp-rust
+  include:
+  - rust-analyzer
+  require:
+  - rust
+- name: lsp-haskell
+  include: null
+  require: null
+- name: lsp-lua
+  include: null
+  require: null
+- name: lsp-js
+  include: null
+  require: null
+- name: lsp-py
+  include: null
+  require: null
+- name: lsp-go
+  include: null
+  require: null
 - name: find
   include:
   - ripgrep
