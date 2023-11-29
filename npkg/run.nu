@@ -198,16 +198,21 @@ def merge-actions [defs --os-type:string] {
 ######################
 ###      acts      ###
 ######################
-def acts [] {
-    {
+def make-acts [] {
+    let default = {
+        setup:    {|p| $'echo start'}
+        teardown: {|p| $'echo stop'}
+        cargo:    {|p| $'cargo install ($p)'}
+        stack:    {|p| $'stack install ($p)'}
+        go:       {|p| $'go install ($p)'}
+        pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
+        npm:      {|p| $'npm install --location=global ($p)'}
+    }
+    let diff = {
         debian: {
             setup:    {|p| $'apt update; apt upgrade'}
             install:  {|p| $'apt install -y --no-install-recommends ($p)'}
-            cargo:    {|p| $'cargo install ($p)'}
-            stack:    {|p| $'stack install ($p)'}
-            go:       {|p| $'go install ($p)'}
             pip:      {|p| $'pip3 install --break-system-packages --no-cache-dir ($p)'}
-            npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'apt remove -y ($p)'}
             teardown: {|p| $'
                 apt-get autoremove -y
@@ -219,36 +224,22 @@ def acts [] {
         arch: {
             setup:    {|p| $'pacman -Syu'}
             install:  {|p| $'pacman -S ($p)'}
-            cargo:    {|p| $'cargo install ($p)'}
-            stack:    {|p| $'stack install ($p)'}
-            go:       {|p| $'go install ($p)'}
-            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
-            npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'pacman -R ($p)'}
             teardown: {|p| $'rm -rf /var/cache/pacman/pkg'}
         }
         alpine: {
-            setup:    {|p| $'echo start'}
             install:  {|p| $'apk add ($p)'}
-            cargo:    {|p| $'cargo install ($p)'}
-            stack:    {|p| $'stack install ($p)'}
-            go:       {|p| $'go install ($p)'}
-            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
-            npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'apk del ($p)'}
-            teardown: {|p| $'echo stop'}
         }
         redhat: {
             setup:    {|p| $'yum update; yum upgrade'}
             install:  {|p| $'yum install ($p)'}
-            cargo:    {|p| $'cargo install ($p)'}
-            stack:    {|p| $'stack install ($p)'}
-            go:       {|p| $'go install ($p)'}
-            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
-            npm:      {|p| $'npm install --location=global ($p)'}
             clean:    {|p| $'yum remove ($p)'}
             teardown: {|p| $'yum clean all'}
         }
+    }
+    {|os, act|
+        $default | merge ($diff | get $os) | get $act
     }
 }
 
@@ -560,7 +551,7 @@ def run-with-other [ctx] {
     if $ctx.act == 'other' {
         run-other $ctx
     } else {
-        do (cmd-with-args ($ctx.actions | get $ctx.os | get $ctx.act)) $ctx.arg
+        do (cmd-with-args (do $ctx.actions $ctx.os $ctx.act)) $ctx.arg
     }
 }
 
@@ -578,13 +569,13 @@ def run-with-level [ctx] {
 }
 
 def run [ctx] {
-    let t = (acts)
+    let a = (make-acts)
     if $ctx.can_ignore {
         if not ($ctx.arg | is-empty) {
-            run-with-level ($ctx | upsert actions $t)
+            run-with-level ($ctx | merge {actions: $a})
         }
     } else {
-        run-with-level ($ctx | upsert actions $t)
+        run-with-level ($ctx | merge {actions: $a})
     }
 }
 
