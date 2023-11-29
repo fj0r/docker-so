@@ -294,6 +294,16 @@ def filter-other [defs versions args] {
     $args | each {|i| resolve-other $defs $versions $i}
 }
 
+def run-shell [it sep] {
+    let c = $it.cmd | str join $sep
+    let c = if ($it.runner? | is-empty) { $c } else { $"($it.runner) '($c)'" }
+    [$"### shell ($it.name)"
+     $"pwd; opwd=${PWD}; cd ($it.workdir)"
+     $c
+     "cd ${opwd}; pwd"
+    ]
+}
+
 def run-other [ctx] {
     let cache = $ctx.cache?
     let target = $ctx.target
@@ -323,19 +333,19 @@ def run-other [ctx] {
             }
             git => {
                 [$"### git ($i.name)"
+                 $"pwd; opwd=${PWD}"
                  $"git clone --depth=2 ($i.url) ($i.target)"
+                 $"cd ($i.target)"
+                 "git log -1 --date=iso"
+                 "cd ${opwd}; pwd"
                 ]
                 | str join (char newline)
             }
             shell => {
-                let c = $i.cmd | str join (char newline)
-                let c = if ($i.exec? | is-empty) { $c } else { $"($i.exec) '($c)'" }
-                [$"### shell ($i.name)"
-                 $"pwd; opwd=${PWD}; cd ($i.workdir)"
-                 $c
-                 "cd ${opwd}; pwd"
-                ]
-                | str join (char newline)
+                run-shell $i (char newline) | str join (char newline)
+            }
+            exec => {
+                run-shell $i ' ' | str join (char newline)
             }
         }
     }

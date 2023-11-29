@@ -17,11 +17,12 @@ defs:
             filter:
             - nu-%v-x86_64-linux-musl-full/nu
             - nu-%v-x86_64-linux-musl-full/nu_plugin_query
-    - shell:
-        exec: nu -c
+    - exec:
+        runner: nu -c
         workdir: /usr/local/bin
         cmd:
-        - register nu_plugin_query
+        - register
+        - nu_plugin_query
     - git:
         url: https://github.com/fj0r/nushell.git
         target: /etc/nushell
