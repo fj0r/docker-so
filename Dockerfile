@@ -3,8 +3,6 @@ FROM ${BASEIMAGE}
 
 COPY npkg /opt/npkg
 
-RUN echo 'NPKG=true' >> /etc/environment
-
 RUN nu /opt/npkg/run.nu setup --clean \
     base \
     nvim \

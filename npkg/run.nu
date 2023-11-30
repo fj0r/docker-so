@@ -392,6 +392,34 @@ def resolve-recipe [ctx name] {
     }
 }
 
+def gen-recipe-env [ctx] {
+    $ctx.arg
+    | reduce -f [] {|i, acc|
+        let e = ($ctx.defs | get $i).env?
+        if ($e | is-empty) { $acc } else {
+            let es = $e
+            | transpose k v
+            | each {|x|
+                if ($x.k | str starts-with '+') {
+                    let n = $x.k | str substring 1..
+                    [
+                    $"export ($n)=($x.v):${($n)}"
+                    $"echo '($n)=($x.v):${($n)}' >> /etc/environment"
+                    ]
+                } else {
+                    [
+                    $"export ($x.k)=($x.v)"
+                    $"echo '($x.k)=($x.v)' >> /etc/environment"
+                    ]
+                }
+            }
+            $acc | append $es
+        }
+    }
+    | flatten
+    | str join (char newline)
+}
+
 def gen-recipe [ctx] {
     $ctx.arg
     | each {|i| resolve-recipe $ctx $i }
@@ -466,7 +494,10 @@ def make-acts [] {
 
 def gen-cmd [ctx] {
     if $ctx.act == 'recipe' {
-        gen-recipe $ctx
+        [
+            (gen-recipe-env $ctx)
+            (gen-recipe $ctx)
+        ] | str join (char newline)
     } else {
         do (cmd-with-args (do $ctx.actions $ctx.os $ctx.act)) $ctx.arg
     }
@@ -475,6 +506,7 @@ def gen-cmd [ctx] {
 def run-with-level [ctx] {
     let cmd = (gen-cmd $ctx)
     if $ctx.dry_run {
+        print $"#################### ($ctx.act) ####################"
         print $cmd
     } else {
         let sep = '#' | str repeat 80
@@ -506,7 +538,7 @@ def setup [
     --clean:    bool
 ] {
     let o = $in
-    let argt = {
+    let d = {
         os: $os_type
         dry_run: $dry_run
         defs: $defs
@@ -517,17 +549,17 @@ def setup [
         act: null
         arg: null
     }
-    run ($argt | upsert act setup    | upsert can_ignore false)
-    run ($argt | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
-    run ($argt | upsert act recipe   | upsert arg $o.require.recipe?)
-    run ($argt | upsert act pip      | upsert arg $o.require.pip?)
-    run ($argt | upsert act npm      | upsert arg $o.require.npm?)
-    run ($argt | upsert act cargo    | upsert arg $o.require.cargo?)
-    run ($argt | upsert act stack    | upsert arg $o.require.stack?)
-    run ($argt | upsert act go       | upsert arg $o.require.go?)
+    run ($d | upsert act setup    | upsert can_ignore false)
+    run ($d | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
+    run ($d | upsert act recipe   | upsert arg $o.require.recipe?)
+    run ($d | upsert act pip      | upsert arg $o.require.pip?)
+    run ($d | upsert act npm      | upsert arg $o.require.npm?)
+    run ($d | upsert act cargo    | upsert arg $o.require.cargo?)
+    run ($d | upsert act stack    | upsert arg $o.require.stack?)
+    run ($d | upsert act go       | upsert arg $o.require.go?)
     if $clean {
-        run ($argt | upsert act clean    | upsert arg $o.use.os?)
-        run ($argt | upsert act teardown | upsert can_ignore false)
+        run ($d | upsert act clean    | upsert arg $o.use.os?)
+        run ($d | upsert act teardown | upsert can_ignore false)
     }
 }
 
