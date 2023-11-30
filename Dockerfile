@@ -3,7 +3,7 @@ FROM ${BASEIMAGE}
 
 COPY npkg /opt/npkg
 
-ENV NPKG=true
+RUN echo 'NPKG=true' >> /etc/environment
 
 RUN nu /opt/npkg/run.nu setup --clean \
     base \
