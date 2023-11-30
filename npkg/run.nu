@@ -158,7 +158,7 @@ def resolve-pkgs [] {
 
 def resolve-def [defs require --os-type:string] {
     mut os = []
-    mut other = []
+    mut recipe = []
     mut pip = []
     mut npm = []
     mut cargo = []
@@ -180,14 +180,14 @@ def resolve-def [defs require --os-type:string] {
                 }
             }
         } else if ($p in $defs) {
-            $other ++= $p
+            $recipe ++= $p
         } else {
             $os ++= $p
         }
     }
     {
         os: $os
-        other: $other
+        recipe: $recipe
         pip: $pip
         npm: $npm
         cargo: $cargo
@@ -364,7 +364,7 @@ def gen-shell [it sep] {
     ]
 }
 
-def gen-other [ctx] {
+def gen-recipe [ctx] {
     $ctx.arg
     | each {|i|
         let vs = $ctx.data.versions
@@ -457,8 +457,8 @@ def make-acts [] {
 }
 
 def gen-cmd [ctx] {
-    if $ctx.act == 'other' {
-        gen-other $ctx
+    if $ctx.act == 'recipe' {
+        gen-recipe $ctx
     } else {
         do (cmd-with-args (do $ctx.actions $ctx.os $ctx.act)) $ctx.arg
     }
@@ -511,7 +511,7 @@ def setup [
     }
     run ($argt | upsert act setup    | upsert can_ignore false)
     run ($argt | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
-    run ($argt | upsert act other    | upsert arg $o.require.other?)
+    run ($argt | upsert act recipe   | upsert arg $o.require.recipe?)
     run ($argt | upsert act pip      | upsert arg $o.require.pip?)
     run ($argt | upsert act npm      | upsert arg $o.require.npm?)
     run ($argt | upsert act cargo    | upsert arg $o.require.cargo?)
@@ -594,14 +594,14 @@ def update-version [manifest] {
 #####################
 ###    download   ###
 #####################
-def download-other [defs versions --cache:string] {
+def download-recipe [defs versions --cache:string] {
     mkdir /tmp/npkg
     let ctx = {
         defs: $defs
         data: { versions: $versions }
         cache: $cache
     }
-    for y in ($defs | columns | each {|x| resolve-other $ctx $x }) {
+    for y in ($defs | columns | each {|x| resolve-recipe $ctx $x }) {
         for i in $y {
             if $i.type == 'download' {
                 if ($i.url? | is-empty) {
@@ -666,7 +666,7 @@ export def main [
             | save -f $"($env.FILE_PWD)/data.yml"
         }
         download => {
-            download-other $manifest.defs $data.versions --cache $cache
+            download-recipe $manifest.defs $data.versions --cache $cache
         }
         debug => {
             $manifest.pkgs | sort-deps1 $needs | log
