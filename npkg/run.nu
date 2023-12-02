@@ -6,6 +6,23 @@ let no = {|x| not $x }
 
 def flip [x, ...a] { do $x $in $a }
 
+def tap [pred act] {
+    let o = $in
+    if (do $pred $o) {
+        do $act $o
+    } else {
+        $o
+    }
+}
+
+def not-empty [] {
+    not ($in | is-empty)
+}
+
+def not-in [m] {
+    not ($m in $in)
+}
+
 def record-to-struct [$k $v] {
     $in | transpose $k $v | get 0
 }
@@ -39,12 +56,17 @@ def 'str repeat' [n] {
     $a
 }
 
+def mkact [action context body] {
+    { action: $action, context: $context } | merge $body
+}
+
 def log [title=''] {
     let o = $in
     print $"<<<<<< ($title) >>>>>>"
     print ($o | to yaml)
     print $">>>>>> ($title) <<<<<<"
     print $"(char newline)"
+    $o
 }
 
 def 'bits check' [bit] {
@@ -91,25 +113,21 @@ def os-type [] {
 ###      deps      ###
 ######################
 def calc-dep-require [pkgs comp] {
-    let dep = if ($comp.require? | is-empty | flip $no) {
+    let dep = if ($comp.require? | is-empty) { [] } else {
         $pkgs
         | where name in $comp.require
         | each {|y| calc-dep-require $pkgs $y}
         | flatten
-    } else {
-        []
     }
     $comp | append $dep
 }
 
 def calc-dep-use [pkgs comp] {
-    let r = if ($comp.require? | is-empty) { [] } else { $comp.require }
-    let r = $r | append (if ($comp.use? | is-empty) { [] } else { $comp.use })
+    let r = if ($comp.require? | not-empty) { $comp.require } else { [] }
+    let r = $r | append (if ($comp.use? | not-empty) { $comp.use } else { [] })
     $comp
     | append (
-        if ($r | is-empty) {
-            []
-        } else {
+        if ($r | is-empty) { [] } else {
             $pkgs
             | where name in $r
             | each {|y| calc-dep-use $pkgs $y}
@@ -140,10 +158,10 @@ def resolve-pkgs [] {
     let o = $in
         | reduce -f {require: [], use: []} {|x, acc|
             mut acc = $acc
-            if ($x.require?.include? | is-empty | flip $no) {
+            if ($x.require?.include? | not-empty) {
                 $acc.require = ($acc.require | append $x.require.include)
             }
-            if ($x.use?.include? | is-empty | flip $no) {
+            if ($x.use?.include? | not-empty) {
                 $acc.use = ($acc.use | append $x.use.include)
             }
             $acc
@@ -205,9 +223,9 @@ def merge-actions [defs --os-type:string] {
 }
 
 
-######################
-###      acts      ###
-######################
+#####################
+###      gen      ###
+#####################
 def resolve-filename [version] {
     $in | str replace -a '%v' $version
 }
@@ -231,28 +249,28 @@ def resolve-tar-filter [filter target version] {
 def resolve-zip-filter [filter target version strip] {
     let nl = (char newline)
     let strip = if ($strip | is-empty) { 0 } else { $strip }
-    if ($filter | is-empty) { '' } else {
+    if ($filter | is-empty) {
+        [mkact mv null { from: $"${temp_dir}/*" to: $target }]
+    } else {
         $filter
         | each {|x|
             if ($x | describe -d | get type) == 'record' {
-                $"mv ${temp_dir}/($x.file) ($target)/($x.rename)"
+                mkact mv null {from: $"${temp_dir}/($x.file)" to: $"($target)/($x.rename)"}
+
             } else {
                 let f = $x | resolve-filename $version
                 let t = $f | split row '/' | range $strip.. | str join '/'
-                $"mv ${temp_dir}/($f) ($target)/($t)"
+                mkact mv null {from: $"($f)" to: $"($target)/($t)"}
             }
         }
-        | str join $nl
     }
 }
 
 def resolve-unzip [getter ctx] {
-    let gtt = $getter.0
-    let gtd = $getter.1
     let trg = [$ctx.target $ctx.wrap?]
-        | filter {|x| $x | is-empty | flip $no }
+        | filter {|x| $x | not-empty }
         | path join
-    let fmt = if ($ctx.format? | is-empty | flip $no) { $ctx.format } else {
+    let fmt = if ($ctx.format? | not-empty ) { $ctx.format } else {
         let fn = $ctx.file | split row '.'
         let zf = $fn | last
         if ($fn | range (-2..-2) | get 0) == 'tar' {
@@ -273,50 +291,45 @@ def resolve-unzip [getter ctx] {
         'zip'     => $"unzip"
         _ => "(!unknown format)"
     }
+    let md = (mkact 'mkdir' $ctx.name { target: $trg temp: false})
     if ($fmt | str starts-with 'tar.') {
-        let s = if ($ctx.strip? | is-empty) { '' } else {
-            $"--strip-components=($ctx.strip)"
-        }
         let f = (resolve-tar-filter $ctx.filter? $trg $ctx.version?)
             | reduce -f {fs: [], mv: []} {|x, acc|
                 let acc = if ($x.0? | is-empty) { $acc } else {
                     $acc | update fs ($acc.fs | append $x.0?)
                 }
                 let acc = if ($x.1? | is-empty) { $acc } else {
-                    $acc | update mv ($acc.mv | append $"mv ($x.1) ($x.2)")
+                    $acc | update mv ($acc.mv | append (mkact mv null {from: $x.1 to: $x.2}))
                 }
                 $acc
             }
-        let u = [$gtt '|' $decmp '-' $s '-C' $trg ($f.fs | str join ' ')]
-        | filter {|x| $x | is-empty | flip $no }
-        | str join ' '
-        [$'mkdir -p ($trg)' $u] | append $f.mv |
-        | filter {|x| $x | is-empty | flip $no }
+        let u = $getter | merge {
+            decompress: $decmp
+            target: $trg
+            strip: $ctx.strip?
+            filter: $f.fs
+        }
+        [$md $u ] | append $f.mv
     } else if $fmt == 'zip' {
         let f = (resolve-zip-filter $ctx.filter? $trg $ctx.version? $ctx.strip?)
-        [ 'opwd=${PWD}'
-          $'mkdir -p ($trg)'
-          'temp_dir=$(mktemp -d)'
-          'cd ${temp_dir}'
-          $'($gtd)'
-          $'($decmp) ($ctx.file)'
-          (if $f == '' {
-            $'mv ${temp_dir}/* ($ctx.target)'
-          } else {
-            $f
-          })
-          'cd ${opwd}'
-          'rm -rf ${temp_dir}'
-        ]
+        let t = mkact 'mkdir' null {temp: true target: $"/tmp/($ctx.name)" }
+        let u = $getter | merge {
+            decompress: $decmp
+            target: $ctx.file
+            workdir: $"/tmp/($ctx.name)"
+        }
+        let r = mkact 'rm' null { target: $"/tmp/($ctx.name)" }
+        [$md $t $u] | append $f | append [$r]
     } else {
         let n = if ($ctx.filter? | is-empty) { $ctx.name } else { $ctx.filter | first }
         let t = [$trg $n] | path join
-        [
-          $'mkdir -p ($trg)'
-            $"($gtt) | ($decmp) > ($t)"
-        ]
+        let u = $getter | merge {
+            decompress: $decmp
+            target: $t
+            redirect: true
+        }
+        [$md $u]
     }
-    | str join (char newline)
 }
 
 def resolve-download-filename [ctx] {
@@ -332,42 +345,44 @@ def gen-download [ctx] {
     let cache = $ctx.cache?
     let target = $ctx.target?
     if ($ctx.url? | is-empty) {
-        [$"# ($ctx.name) [not found]"]
+        mkact log $ctx.name { event: "not found" }
     } else {
         let x = resolve-download-filename $ctx
         let f = if ($cache | is-empty) {
-            [$"curl -sSL ($x.url)" $"curl -sSLo ($x.file) ($x.url)"]
+            mkact 'download' $ctx.name { url: $x.url target: $x.file}
         } else {
             let f = [$cache $x.file] | path join
             if ($cache | find -r '^https?://' | is-empty) {
-                [$"cat ($f)" $"cp ($f) ($x.file)"]
+                mkact 'download' $ctx.name { url: $f target: $x.file cache: true}
             } else {
-                [$"curl -sSL ($f)" $"curl -sSLo ($x.file) ($f)"]
+                mkact 'download' $ctx.name { url: $f target: $x.file}
             }
         }
         let cx = $ctx | merge {file: $x.file, cache: $cache, target: $target}
-        [$"### download ($ctx.name)" (resolve-unzip $f $cx)]
+        resolve-unzip $f $cx
     }
 }
 
 def gen-git [$ctx] {
-    [$"### git ($ctx.name)"
-     $"pwd; opwd=${PWD}"
-     $"git clone --depth=2 ($ctx.url) ($ctx.target)"
-     $"cd ($ctx.target)"
-     "git log -1 --date=iso"
-     "cd ${opwd}; pwd"
-    ]
+    mkact git $ctx.name {
+        url: $ctx.url
+        target: $ctx.target
+        depth: 2
+        log: true
+    }
 }
 
-def gen-shell [it sep] {
-    let c = $it.cmd | str join $sep
-    let c = if ($it.runner? | is-empty) { $c } else { $"($it.runner) '($c)'" }
-    [$"### shell ($it.name)"
-     $"pwd; opwd=${PWD}; cd ($it.workdir)"
-     $c
-     "cd ${opwd}; pwd"
-    ]
+def gen-shell [it type] {
+    let args = match $type {
+            'shell' => $it.cmd
+            'exec' => [($it.cmd | str join ' ')]
+        }
+    mkact 'shell' null {
+        context: $it.name
+        workdir: $it.workdir?
+        runner: $it.runner?
+        args: $args
+    }
 }
 
 def resolve-recipe [ctx name] {
@@ -393,7 +408,7 @@ def resolve-recipe [ctx name] {
 }
 
 def gen-recipe-env [ctx] {
-    $ctx.arg
+    $ctx.args
     | reduce -f [] {|i, acc|
         let e = ($ctx.defs | get $i).env?
         if ($e | is-empty) { $acc } else {
@@ -402,26 +417,18 @@ def gen-recipe-env [ctx] {
             | each {|x|
                 if ($x.k | str starts-with '+') {
                     let n = $x.k | str substring 1..
-                    [
-                    $"export ($n)=($x.v):${($n)}"
-                    $"echo '($n)=($x.v):${($n)}' >> /etc/environment"
-                    ]
+                    mkact 'env-pre' $i { key: $n value: $x.v }
                 } else {
-                    [
-                    $"export ($x.k)=($x.v)"
-                    $"echo '($x.k)=($x.v)' >> /etc/environment"
-                    ]
+                    mkact 'env' $i { key: $x.k value: $x.v }
                 }
             }
             $acc | append $es
         }
     }
-    | flatten
-    | str join (char newline)
 }
 
 def gen-recipe [ctx] {
-    $ctx.arg
+    $ctx.args
     | each {|i| resolve-recipe $ctx $i }
     | flatten
     | each {|i|
@@ -433,21 +440,65 @@ def gen-recipe [ctx] {
                 gen-git $i
             }
             shell => {
-                gen-shell $i (char newline)
+                gen-shell $i 'shell'
             }
             exec => {
-                gen-shell $i ' '
+                gen-shell $i 'exec'
             }
         }
-        | str join (char newline)
     }
-    | str join (char newline)
+    | flatten
 }
 
+def gen-cmd [ctx] {
+    if $ctx.can_ignore and ($ctx.args | is-empty) {
+        null
+    } else if $ctx.act == 'recipe' {
+        [
+            (gen-recipe-env $ctx)
+            (gen-recipe $ctx)
+        ] | flatten
+    } else {
+        mkact 'common' $ctx.act { os: $ctx.os args: $ctx.args }
+    }
+}
+
+def gen-stage [o clean default] {
+    let setup = gen-cmd ($default | upsert act setup   | upsert can_ignore false)
+    let instl = gen-cmd ($default | upsert act install | upsert args ($o.require.os? | append $o.use.os?))
+    let recip = gen-cmd ($default | upsert act recipe  | upsert args $o.require.recipe?)
+    let other = [pip npm cargo stack go]
+    | each {|x| gen-cmd ($default | upsert act $x | upsert args ($o.require | get $x))}
+    let final = if $clean {[
+        (gen-cmd ($default | upsert act clean    | upsert args $o.use.os?))
+        (gen-cmd ($default | upsert act teardown | upsert can_ignore false))
+    ]} else {[]}
+    [$setup $instl] | append $recip | append $other | append $final
+}
+
+def optm-stage [] {
+    let x = $in
+    mut o = []
+    mut mkdir = []
+    for i in $x {
+        match $i.action {
+            mkdir => {
+                if not ($i.target in $mkdir) {
+                    $mkdir ++= [$i.target]
+                    $o ++= [$i]
+                }
+            }
+            _ => {
+                $o ++= [$i]
+            }
+        }
+    }
+    $o
+}
 #####################
-###     setup     ###
+###      run      ###
 #####################
-def make-acts [] {
+def interpret-common [os act] {
     let default = {
         setup:    {|p| $'echo start'}
         teardown: {|p| $'echo stop'}
@@ -459,11 +510,11 @@ def make-acts [] {
     }
     let diff = {
         debian: {
-            setup:    {|p| $'apt update; apt upgrade'}
-            install:  {|p| $'apt install -y --no-install-recommends ($p)'}
-            pip:      {|p| $'pip3 install --break-system-packages --no-cache-dir ($p)'}
-            clean:    {|p| $'apt remove -y ($p)'}
-            teardown: {|p| $'
+            setup:    {|x| $'apt update; apt upgrade'}
+            install:  {|x| $'apt install -y --no-install-recommends ($x)'}
+            pip:      {|x| $'pip3 install --break-system-packages --no-cache-dir ($x)'}
+            clean:    {|x| $'apt remove -y ($x)'}
+            teardown: {|x| $'
                 apt-get autoremove -y
                 apt-get clean -y
                 rm -rf /var/lib/apt/lists/*
@@ -471,60 +522,100 @@ def make-acts [] {
 
         }
         arch: {
-            setup:    {|p| $'pacman -Syu'}
-            install:  {|p| $'pacman -S ($p)'}
-            clean:    {|p| $'pacman -R ($p)'}
-            teardown: {|p| $'rm -rf /var/cache/pacman/pkg'}
+            setup:    {|x| $'pacman -Syu'}
+            install:  {|x| $'pacman -S ($x)'}
+            clean:    {|x| $'pacman -R ($x)'}
+            teardown: {|x| $'rm -rf /var/cache/pacman/pkg'}
         }
         alpine: {
-            install:  {|p| $'apk add ($p)'}
-            clean:    {|p| $'apk del ($p)'}
+            install:  {|x| $'apk add ($x)'}
+            clean:    {|x| $'apk del ($x)'}
         }
         redhat: {
-            setup:    {|p| $'yum update; yum upgrade'}
-            install:  {|p| $'yum install ($p)'}
-            clean:    {|p| $'yum remove ($p)'}
-            teardown: {|p| $'yum clean all'}
+            setup:    {|x| $'yum update; yum upgrade'}
+            install:  {|x| $'yum install ($x)'}
+            clean:    {|x| $'yum remove ($x)'}
+            teardown: {|x| $'yum clean all'}
         }
     }
-    {|os, act|
-        $default | merge ($diff | get $os) | get $act
-    }
+    $default | merge ($diff | get $os) | get $act
 }
 
-def gen-cmd [ctx] {
-    if $ctx.act == 'recipe' {
-        [
-            (gen-recipe-env $ctx)
-            (gen-recipe $ctx)
-        ] | str join (char newline)
+def interpret-recipe [act] {
+    let default = {
+        mkdir:    {|x| $"mkdir -p ($x.target)"}
+        git:      {|x| [
+                        $"git clone --depth=($x.depth) ($x.url) ($x.target)"
+                        $"cd ($x.target)"
+                        "git log -1 --date=iso"
+                       ] | str join (char newline)
+                  }
+        shell:    {|x| $x.args
+                        | tap {|y| $x.runner? | not-empty } {|y|
+                            let z = $y | str join ';'
+                            $"($x.runner) '($z)'"
+                        }
+                        | tap {|y| $x.workdir? | not-empty } {|y|
+                            [
+                                $"cd ($x.workdir)"
+                                $y
+                            ] | str join (char newline)
+                        }
+                  }
+        mv:       {|x| $"mv ($x.from) ($x.to)" }
+        rm:       {|x| $"rm -rf ($x.target)" }
+        env:      {|x| $"export ($x.key)=($x.value)(char newline)echo '($x.key)=($x.value)' >> /etc/environment"}
+        env-pre:  {|x| $"export ($x.key)=($x.value):${($x.key)}(char newline)echo '($x.key)=($x.value):${($x.key)}' >> /etc/environment"}
+        download: {|x|
+                        if ($x.workdir? | not-empty) {
+                            # zip
+                            let f = if ($x.cache? | is-empty) {
+                                $'wget -c ($x.url) -O ($x.target)'
+                            } else {
+                                $'cp ($x.url) ($x.target)'
+                            }
+                            [
+                            $"cd ($x.workdir)"
+                            $f
+                            $"($x.decompress) ($x.target)"
+                            ]
+                            | str join (char newline)
+                        } else if ($x.redirect? | not-empty) {
+                            # xx -d
+                            let f = if ($x.cache? | is-empty) { 'curl -sSL' } else { 'cat' }
+                            $"($f) ($x.url) | ($x.decompress) > ($x.target)"
+                        } else {
+                            # tar
+                            let f = if ($x.cache? | is-empty) { 'curl -sSL' } else { 'cat' }
+                            let c = $"-C ($x.target)"
+                            let s = if ($x.strip? | is-empty) { '' } else {
+                                $"--strip-components=($x.strip)"
+                            }
+                            let o = $x.filter | str join ' '
+                            [$f $x.url '|' $x.decompress '-' $s $c $o]
+                            | filter {|x| $x | not-empty }
+                            | str join ' '
+                        }
+                  }
+    }
+    if ($act in $default) {
+        $default | get $act
     } else {
-        do (cmd-with-args (do $ctx.actions $ctx.os $ctx.act)) $ctx.arg
+        {|args| $"### no ($act)"}
     }
 }
 
-def run-with-level [ctx] {
-    let cmd = (gen-cmd $ctx)
-    if $ctx.dry_run {
-        print $"#################### ($ctx.act) ####################"
-        print $cmd
-    } else {
-        let sep = '#' | str repeat 80
-        print $sep
-        print $cmd
-        print $sep
-        sh -c $"set -eux; ($cmd)"
-    }
-}
-
-def run [ctx] {
-    let a = (make-acts)
-    if $ctx.can_ignore {
-        if ($ctx.arg | is-empty | flip $no) {
-            run-with-level ($ctx | merge {actions: $a})
+def run-stage [dry_run] {
+    for x in $in {
+        if $x.action == 'common' {
+            print $'#################### ($x.context) ####################'
+            let cmd = do (cmd-with-args (interpret-common $x.os $x.context)) $x.args
+            print $cmd
+        } else {
+            print $"### ($x.context)[($x.action)]"
+            let cmd = do (interpret-recipe $x.action) $x
+            print $cmd
         }
-    } else {
-        run-with-level ($ctx | merge {actions: $a})
     }
 }
 
@@ -537,8 +628,7 @@ def setup [
     --dry-run:  bool
     --clean:    bool
 ] {
-    let o = $in
-    let d = {
+    gen-stage $in $clean {
         os: $os_type
         dry_run: $dry_run
         defs: $defs
@@ -547,42 +637,32 @@ def setup [
         cache: $cache
         can_ignore: true
         act: null
-        arg: null
+        args: null
     }
-    run ($d | upsert act setup    | upsert can_ignore false)
-    run ($d | upsert act install  | upsert arg ($o.require.os? | append $o.use.os?))
-    run ($d | upsert act recipe   | upsert arg $o.require.recipe?)
-    run ($d | upsert act pip      | upsert arg $o.require.pip?)
-    run ($d | upsert act npm      | upsert arg $o.require.npm?)
-    run ($d | upsert act cargo    | upsert arg $o.require.cargo?)
-    run ($d | upsert act stack    | upsert arg $o.require.stack?)
-    run ($d | upsert act go       | upsert arg $o.require.go?)
-    if $clean {
-        run ($d | upsert act clean    | upsert arg $o.use.os?)
-        run ($d | upsert act teardown | upsert can_ignore false)
-    }
+    | optm-stage
+    | run-stage $dry_run
 }
 
 #####################
 ###    version    ###
 #####################
-def extract [input act arg?] {
+def extract [input act args?] {
     match $act {
         from-json => {
             $input | from json
         }
         prefix => {
-            $"($arg)($input)"
+            $"($args)($input)"
         }
         index => {
-            $input | get $arg
+            $input | get $args
         }
         field => {
-            if ($arg | is-empty) {
+            if ($args | is-empty) {
                 $input
             } else {
-                if $arg in $input {
-                    $input | get $arg
+                if $args in $input {
+                    $input | get $args
                 } else {
                     null
                 }
@@ -592,7 +672,7 @@ def extract [input act arg?] {
             $input | str trim
         }
         regexp => {
-            $input | parse -r $arg | get 0?.capture0?
+            $input | parse -r $args | get 0?.capture0?
         }
         only-nums => {
             $input | parse -r '(?P<v>[0-9\.\-]+)' | get 0?.v?
@@ -622,7 +702,7 @@ def update-version [manifest] {
         print $'==> ($item.k)'
         let url = $i.version?.url?
         let ext = $i.version?.extract
-        if ($url | is-empty | flip $no) {
+        if ($url | not-empty) {
             let ver = (run-extractors (curl -sSL $url) $ext)
             print $ver
             $data = ($data | upsert $item.k $ver)
@@ -649,7 +729,7 @@ def download-recipe [defs versions --cache:string] {
                 } else {
                     let x = resolve-download-filename $i
                     print $'# download ($x.file)'
-                    let t = [$cache $x.file] | filter {|x| $x | is-empty | flip $no } | path join
+                    let t = [$cache $x.file] | filter {|x| $x | not-empty } | path join
                     if ($cache | find -r '^https?://' | is-empty) {
                         wget -c ($x.url) -O ($t)
                     } else {
