@@ -318,8 +318,8 @@ def resolve-unzip [getter ctx] {
             target: $ctx.file
             workdir: $"/tmp/($ctx.name)"
         }
-        let r = mkact 'rm' null { target: $"/tmp/($ctx.name)" }
-        [$md $t $u] | append $f | append [$r]
+        #let r = mkact 'rm' null { target: $"/tmp/($ctx.name)" }
+        [$md $t $u] | append $f
     } else {
         let n = if ($ctx.filter? | is-empty) { $ctx.name } else { $ctx.filter | first }
         let t = [$trg $n] | path join
@@ -480,18 +480,37 @@ def optm-stage [] {
     let x = $in
     mut o = []
     mut mkdir = []
+    mut tempdir = []
     for i in $x {
         match $i.action {
             mkdir => {
-                if not ($i.target in $mkdir) {
-                    $mkdir ++= [$i.target]
-                    $o ++= [$i]
+                if ($i.temp? | default false) {
+                    if not ($i.target in $tempdir) {
+                        $tempdir ++= [$i.target]
+                        $o ++= [$i]
+                    } else {
+                        let a = mkact log $i.context {
+                            event: 'temp already exists'
+                            target: $i.target
+                        }
+                        $o ++= [$a]
+                    }
+
+                } else {
+                    if not ($i.target in $mkdir) {
+                        $mkdir ++= [$i.target]
+                        $o ++= [$i]
+                    }
                 }
             }
             _ => {
                 $o ++= [$i]
             }
         }
+    }
+    for i in $tempdir {
+        let a = mkact rm null {target: $i}
+        $o ++= [$a]
     }
     $o
 }
