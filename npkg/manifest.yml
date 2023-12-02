@@ -228,6 +228,10 @@ pkgs:
   - zip
   - http
   - wget
+  - fs
+- name: fs
+  include:
+  - tree
 - name: base
   include:
   - sudo

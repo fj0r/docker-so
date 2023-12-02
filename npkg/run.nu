@@ -246,7 +246,7 @@ def resolve-tar-filter [filter target version] {
     }
 }
 
-def resolve-zip-filter [filter target version strip] {
+def resolve-zip-filter [workdir filter target version strip] {
     let nl = (char newline)
     let strip = if ($strip | is-empty) { 0 } else { $strip }
     if ($filter | is-empty) {
@@ -260,7 +260,7 @@ def resolve-zip-filter [filter target version strip] {
             } else {
                 let f = $x | resolve-filename $version
                 let t = $f | split row '/' | range $strip.. | str join '/'
-                mkact mv null {from: $"($f)" to: $"($target)/($t)"}
+                mkact mv null {from: $"($workdir)/($f)" to: $"($target)/($t)" }
             }
         }
     }
@@ -311,7 +311,7 @@ def resolve-unzip [getter ctx] {
         }
         [$md $u ] | append $f.mv
     } else if $fmt == 'zip' {
-        let f = (resolve-zip-filter $ctx.filter? $trg $ctx.version? $ctx.strip?)
+        let f = (resolve-zip-filter $"/tmp/($ctx.name)" $ctx.filter? $trg $ctx.version? $ctx.strip?)
         let t = mkact 'mkdir' null {temp: true target: $"/tmp/($ctx.name)" }
         let u = $getter | merge {
             decompress: $decmp
@@ -490,6 +490,7 @@ def optm-stage [] {
                         $o ++= [$i]
                     } else {
                         let a = mkact log $i.context {
+                            level: 'warn'
                             event: 'temp already exists'
                             target: $i.target
                         }
@@ -529,8 +530,8 @@ def interpret-common [os act] {
     }
     let diff = {
         debian: {
-            setup:    {|x| $'apt update; apt upgrade'}
-            install:  {|x| $'apt install -y --no-install-recommends ($x)'}
+            setup:    {|x| $'apt update; apt upgrade -y'}
+            install:  {|x| $'DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends ($x)'}
             pip:      {|x| $'pip3 install --break-system-packages --no-cache-dir ($x)'}
             clean:    {|x| $'apt remove -y ($x)'}
             teardown: {|x| $'
@@ -562,6 +563,7 @@ def interpret-common [os act] {
 
 def interpret-recipe [act] {
     let default = {
+        log:      {|x| $"echo '($x)'"}
         mkdir:    {|x| $"mkdir -p ($x.target)"}
         git:      {|x| [
                         $"git clone --depth=($x.depth) ($x.url) ($x.target)"
@@ -584,7 +586,10 @@ def interpret-recipe [act] {
         mv:       {|x| $"mv ($x.from) ($x.to)" }
         rm:       {|x| $"rm -rf ($x.target)" }
         env:      {|x| $"export ($x.key)=($x.value)(char newline)echo '($x.key)=($x.value)' >> /etc/environment"}
-        env-pre:  {|x| $"export ($x.key)=($x.value):${($x.key)}(char newline)echo '($x.key)=($x.value):${($x.key)}' >> /etc/environment"}
+        env-pre:  {|x| [ $"export ($x.key)='($x.value):${($x.key)}'"
+                         $"echo '($x.key)=($x.value):${($x.key)}' >> /etc/environment"
+                       ] | str join (char newline)
+                  }
         download: {|x|
                         if ($x.workdir? | not-empty) {
                             # zip
@@ -620,20 +625,27 @@ def interpret-recipe [act] {
     if ($act in $default) {
         $default | get $act
     } else {
-        {|args| $"### no ($act)"}
+        {|args| $"### no ($act)" }
     }
 }
 
 def run-stage [dry_run] {
     for x in $in {
-        if $x.action == 'common' {
-            print $'#################### ($x.context) ####################'
+        let stage = if $x.action == 'common' {
+            let title = $"#################### ($x.context) ####################"
             let cmd = do (cmd-with-args (interpret-common $x.os $x.context)) $x.args
-            print $cmd
+            [$title $cmd]
         } else {
-            print $"### ($x.context)[($x.action)]"
+            let title = $"### ($x.context)[($x.action)]"
             let cmd = do (interpret-recipe $x.action) $x
-            print $cmd
+            [$title $cmd]
+        }
+        | str join (char newline)
+
+        if $dry_run {
+            print $stage
+        } else {
+            sh -c $"set -eux(char newline)($stage)"
         }
     }
 }
