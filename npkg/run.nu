@@ -158,11 +158,15 @@ def resolve-pkgs [] {
     let o = $in
         | reduce -f {require: [], use: []} {|x, acc|
             mut acc = $acc
-            if ($x.require?.include? | not-empty) {
-                $acc.require = ($acc.require | append $x.require.include)
+            for i in $x.require? {
+                if ($i.include? | not-empty) {
+                    $acc.require = ($acc.require | append $i.include)
+                }
             }
-            if ($x.use?.include? | not-empty) {
-                $acc.use = ($acc.use | append $x.use.include)
+            for i in $x.use? {
+                if ($i.include? | not-empty) {
+                    $acc.use = ($acc.use | append $i.include)
+                }
             }
             $acc
         }
@@ -182,7 +186,6 @@ def resolve-def [defs require --os-type:string] {
     mut cargo = []
     mut stack = []
     mut go = []
-    let require = if ($require | is-empty) { [] } else { $require }
     for p in $require {
         if ($p | is-record) {
             for i in ($p | transpose k v) {

@@ -92,6 +92,10 @@ defs:
       - index: ghc
       - trim: null
       - only-nums: null
+    install:
+    - download:
+        url: https://downloads.haskell.org/~ghc/%v/ghc-%v-x86_64-deb11-linux.tar.xz
+        strip: 1
   haskell-language-server:
     version:
       url: https://api.github.com/repos/haskell/haskell-language-server/releases/latest
@@ -305,7 +309,9 @@ pkgs:
   require:
   - rust
 - name: haskell
-  include: null
+  include:
+  - ghc
+  - haskell-language-server
   require:
   - nvim
 - name: golang
