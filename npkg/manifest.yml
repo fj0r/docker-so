@@ -81,6 +81,26 @@ defs:
         workdir: /usr/local/bin
         cmd:
         - chmod +x rust-analyzer
+  ghc:
+    version:
+      url: https://www.stackage.org/lts
+      header:
+        Accept: application/json
+      extract:
+      - from-json: null
+      - index: snapshot
+      - index: ghc
+      - trim: null
+      - only-nums: null
+  haskell-language-server:
+    version:
+      url: https://api.github.com/repos/haskell/haskell-language-server/releases/latest
+      extract:
+      - github: null
+    install:
+    - download:
+        url: https://github.com/haskell/haskell-language-server/releases/download/%v/haskell-language-server-%v-x86_64-linux-unknown.tar.xz
+        strip: 1
   ripgrep:
     version:
       url: https://api.github.com/repos/BurntSushi/ripgrep/releases/latest

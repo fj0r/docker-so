@@ -732,9 +732,13 @@ def update-version [manifest] {
         let i = $item.v?
         print $'==> ($item.k)'
         let url = $i.version?.url?
-        let ext = $i.version?.extract
+        let ext = $i.version?.extract?
+        let header = $i.version?.header?
+        let header = if ($header | is-empty) { [] } else {
+            $header | transpose k v | each {|x| [-H $"($x.k): ($x.v)"] } | flatten
+        }
         if ($url | not-empty) {
-            let ver = (run-extractors (curl -sSL $url) $ext)
+            let ver = (run-extractors (curl -sSL $header $url) $ext)
             print $ver
             $data = ($data | upsert $item.k $ver)
         }
