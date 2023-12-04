@@ -96,6 +96,7 @@ defs:
     - download:
         url: https://downloads.haskell.org/~ghc/%v/ghc-%v-x86_64-deb11-linux.tar.xz
         strip: 1
+        workdir: /tmp/ghc-%v
   haskell-language-server:
     version:
       url: https://api.github.com/repos/haskell/haskell-language-server/releases/latest
@@ -179,6 +180,7 @@ defs:
         strip: 1
         filter:
         - mask-%v-x86_64-unknown-linux-musl/mask
+        workdir: /tmp/mask-%v-%t
   watchexec:
     version:
       url: https://api.github.com/repos/watchexec/watchexec/releases/latest

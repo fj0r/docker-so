@@ -230,7 +230,9 @@ def merge-actions [defs --os-type:string] {
 ###      gen      ###
 #####################
 def resolve-filename [version] {
-    $in | str replace -a '%v' $version
+    $in
+    | str replace -a '%v' $version
+    | str replace -a '%t' (date now | format date '%Y%m%d')
 }
 
 def resolve-tar-filter [filter target version] {
@@ -294,7 +296,11 @@ def resolve-unzip [getter ctx] {
         'zip'     => $"unzip"
         _ => "(!unknown format)"
     }
-    let md = (mkact 'mkdir' $ctx.name { target: $trg temp: false})
+    let md = if ($ctx.workdir? | is-empty) {
+        mkact 'mkdir' $ctx.name { target: $trg temp: false }
+    } else {
+        mkact 'mkdir' $ctx.name { target: $ctx.workdir temp: true }
+    }
     if ($fmt | str starts-with 'tar.') {
         let f = (resolve-tar-filter $ctx.filter? $trg $ctx.version?)
             | reduce -f {fs: [], mv: []} {|x, acc|
@@ -314,15 +320,14 @@ def resolve-unzip [getter ctx] {
         }
         [$md $u ] | append $f.mv
     } else if $fmt == 'zip' {
-        let f = (resolve-zip-filter $"/tmp/($ctx.name)" $ctx.filter? $trg $ctx.version? $ctx.strip?)
-        let t = mkact 'mkdir' null {temp: true target: $"/tmp/($ctx.name)" }
+        let f = (resolve-zip-filter $ctx.workdir $ctx.filter? $trg $ctx.version? $ctx.strip?)
         let u = $getter | merge {
             decompress: $decmp
             target: $ctx.file
-            workdir: $"/tmp/($ctx.name)"
+            workdir: $ctx.workdir
         }
         #let r = mkact 'rm' null { target: $"/tmp/($ctx.name)" }
-        [$md $t $u] | append $f
+        [$md $u] | append $f
     } else {
         let n = if ($ctx.filter? | is-empty) { $ctx.name } else { $ctx.filter | first }
         let t = [$trg $n] | path join
@@ -341,7 +346,10 @@ def resolve-download-filename [ctx] {
     let url = $ctx.url | resolve-filename $ver
     let file = if ($fn | is-empty) {  $url | split row '/' | last } else { $fn }
     let file = $file | resolve-filename $ver
-    { url: $url, file: $file }
+    let workdir = if ($ctx.workdir? | is-empty) { null } else {
+        $ctx.workdir | resolve-filename $ver
+    }
+    { url: $url, file: $file, workdir: $workdir }
 }
 
 def gen-download [ctx] {
@@ -355,13 +363,20 @@ def gen-download [ctx] {
             mkact 'download' $ctx.name { url: $x.url target: $x.file}
         } else {
             let f = [$cache $x.file] | path join
+            let a = mkact 'download' $ctx.name {
+                    url: $f
+                    target: $x.file
+                }
             if ($cache | find -r '^https?://' | is-empty) {
-                mkact 'download' $ctx.name { url: $f target: $x.file cache: true}
-            } else {
-                mkact 'download' $ctx.name { url: $f target: $x.file}
-            }
+                $a | upsert cache true
+            } else { $a }
         }
-        let cx = $ctx | merge {file: $x.file, cache: $cache, target: $target}
+        let cx = $ctx | merge {
+            file: $x.file
+            cache: $cache
+            target: $target
+            workdir: $x.workdir
+        }
         resolve-unzip $f $cx
     }
 }
