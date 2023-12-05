@@ -320,6 +320,9 @@ def resolve-unzip [getter ctx] {
         }
         [$md $u ] | append $f.mv
     } else if $fmt == 'zip' {
+        if ($ctx.workdir? | is-empty) {
+            mkact log $ctx.workdir { event: "workdir should not empty" }
+        }
         let f = (resolve-zip-filter $ctx.workdir $ctx.filter? $trg $ctx.version? $ctx.strip?)
         let u = $getter | merge {
             decompress: $decmp
@@ -543,14 +546,13 @@ def interpret-common [os act] {
         cargo:    {|p| $'cargo install ($p)'}
         stack:    {|p| $'stack install ($p)'}
         go:       {|p| $'go install ($p)'}
-        pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
+        pip:      {|x| $'pip3 install --break-system-packages --no-cache-dir ($x)'}
         npm:      {|p| $'npm install --location=global ($p)'}
     }
     let diff = {
         debian: {
             setup:    {|x| $'apt update; apt upgrade -y'}
             install:  {|x| $'DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends ($x)'}
-            pip:      {|x| $'pip3 install --break-system-packages --no-cache-dir ($x)'}
             clean:    {|x| $'apt remove -y ($x)'}
             teardown: {|x| $'
                 apt-get autoremove -y
@@ -560,7 +562,7 @@ def interpret-common [os act] {
 
         }
         arch: {
-            setup:    {|x| $'pacman -Syu'}
+            setup:    {|x| $'pacman -Syy; pacman -Syu'}
             install:  {|x| $'pacman -S ($x)'}
             clean:    {|x| $'pacman -R ($x)'}
             teardown: {|x| $'rm -rf /var/cache/pacman/pkg'}
@@ -572,6 +574,7 @@ def interpret-common [os act] {
         redhat: {
             setup:    {|x| $'yum update; yum upgrade'}
             install:  {|x| $'yum install ($x)'}
+            pip:      {|p| $'pip3 install --no-cache-dir ($p)'}
             clean:    {|x| $'yum remove ($x)'}
             teardown: {|x| $'yum clean all'}
         }
