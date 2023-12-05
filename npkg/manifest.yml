@@ -97,6 +97,9 @@ defs:
     - download:
         url: https://downloads.haskell.org/~ghc/%v/ghc-%v-x86_64-deb11-linux.tar.xz
         strip: 1
+    - shell:
+        cmd:
+        - pwd
   haskell-language-server:
     version:
       url: https://api.github.com/repos/haskell/haskell-language-server/releases/latest
@@ -136,6 +139,7 @@ defs:
       url: https://api.github.com/repos/mikefarah/yq/releases/latest
       extract:
       - github: null
+    workdir: /tmp/%n-%v
     install:
     - download:
         url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz

@@ -245,7 +245,7 @@ def resolve-tar-filter [workdir filter target name version] {
                 let fn = $tf | split row '/' | last
                 let nf = $x.rename | resolve-filename $name $version
                 let trg = if ($workdir | is-empty) { $target } else { $workdir }
-                [$tf $'($trg)/($fn)' $'($trg)/($nf)']
+                [$tf $'($trg)/($fn)' $'($target)/($nf)']
             } else {
                 let r = $x | resolve-filename $name $version
                 [$r]
@@ -299,9 +299,9 @@ def resolve-unzip [getter ctx] {
         'zip'     => $"unzip"
         _ => "(!unknown format)"
     }
-    let md = if ($ctx.workdir? | is-empty) {
-        mkact 'mkdir' $ctx.name { target: $trg temp: false }
-    } else {
+
+    let md = mkact 'mkdir' $ctx.name { target: $trg temp: false }
+    let mt = if ($ctx.workdir? | is-empty) { mkact 'dumb' null {} } else {
         mkact 'mkdir' $ctx.name { target: $ctx.workdir temp: true }
     }
     if ($fmt | str starts-with 'tar.') {
@@ -320,8 +320,9 @@ def resolve-unzip [getter ctx] {
             target: $trg
             strip: $ctx.strip?
             filter: $f.fs
+            workdir: $ctx.workdir?
         }
-        [$md $u ] | append $f.mv
+        [$md $mt $u] | append $f.mv
     } else if $fmt == 'zip' {
         if ($ctx.workdir? | is-empty) {
             mkact log $ctx.workdir { event: "workdir should not empty" }
@@ -332,8 +333,7 @@ def resolve-unzip [getter ctx] {
             target: $ctx.file
             workdir: $ctx.workdir
         }
-        #let r = mkact 'rm' null { target: $"/tmp/($ctx.name)" }
-        [$md $u] | append $f
+        [$md $mt $u] | append $f
     } else {
         let n = if ($ctx.filter? | is-empty) { $ctx.name } else { $ctx.filter | first }
         let t = [$trg $n] | path join
@@ -342,7 +342,7 @@ def resolve-unzip [getter ctx] {
             target: $t
             redirect: true
         }
-        [$md $u]
+        [$md $mt $u]
     }
 }
 
@@ -414,7 +414,9 @@ def resolve-recipe [ctx name] {
     let vs = $ctx.data.versions
     let version = if $name in $vs { $vs | get $name } else { "" }
     let df = $ctx.defs | get $name
-    let workdir = $df.workdir?
+    let workdir = if ($df.workdir? | is-empty) { $df.workdir? } else {
+        $df.workdir | resolve-filename $name $version
+    }
     let install = $df.install?
     let install = if ($install | is-empty) { [] } else { $install }
     $install
@@ -531,6 +533,9 @@ def optm-stage [] {
                         $o ++= [$i]
                     }
                 }
+            }
+            dumb => {
+                $o
             }
             _ => {
                 $o ++= [$i]
