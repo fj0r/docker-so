@@ -229,29 +229,32 @@ def merge-actions [defs --os-type:string] {
 #####################
 ###      gen      ###
 #####################
-def resolve-filename [version] {
+def resolve-filename [name version] {
     $in
     | str replace -a '%v' $version
+    | str replace -a '%n' $name
     | str replace -a '%t' (date now | format date '%Y%m%d')
 }
 
-def resolve-tar-filter [filter target version] {
+def resolve-tar-filter [workdir filter target name version] {
     if ($filter | is-empty) { [] } else {
         $filter
         | each {|x|
             if ($x | describe -d | get type) == 'record' {
-                let tf = $x.file | resolve-filename $version
+                let tf = $x.file | resolve-filename $name $version
                 let fn = $tf | split row '/' | last
-                let nf = $x.rename | resolve-filename $version
-                [$tf $'($target)/($fn)' $'($target)/($nf)']
+                let nf = $x.rename | resolve-filename $name $version
+                let trg = if ($workdir | is-empty) { $target } else { $workdir }
+                [$tf $'($trg)/($fn)' $'($trg)/($nf)']
             } else {
-                [($x | resolve-filename $version)]
+                let r = $x | resolve-filename $name $version
+                [$r]
             }
         }
     }
 }
 
-def resolve-zip-filter [workdir filter target version strip] {
+def resolve-zip-filter [workdir filter target name version strip] {
     let nl = (char newline)
     let strip = if ($strip | is-empty) { 0 } else { $strip }
     if ($filter | is-empty) {
@@ -263,7 +266,7 @@ def resolve-zip-filter [workdir filter target version strip] {
                 mkact mv null {from: $"${temp_dir}/($x.file)" to: $"($target)/($x.rename)"}
 
             } else {
-                let f = $x | resolve-filename $version
+                let f = $x | resolve-filename $name $version
                 let t = $f | split row '/' | range $strip.. | str join '/'
                 mkact mv null {from: $"($workdir)/($f)" to: $"($target)/($t)" }
             }
@@ -302,7 +305,7 @@ def resolve-unzip [getter ctx] {
         mkact 'mkdir' $ctx.name { target: $ctx.workdir temp: true }
     }
     if ($fmt | str starts-with 'tar.') {
-        let f = (resolve-tar-filter $ctx.filter? $trg $ctx.version?)
+        let f = (resolve-tar-filter $ctx.workdir $ctx.filter? $trg $ctx.name $ctx.version?)
             | reduce -f {fs: [], mv: []} {|x, acc|
                 let acc = if ($x.0? | is-empty) { $acc } else {
                     $acc | update fs ($acc.fs | append $x.0?)
@@ -323,7 +326,7 @@ def resolve-unzip [getter ctx] {
         if ($ctx.workdir? | is-empty) {
             mkact log $ctx.workdir { event: "workdir should not empty" }
         }
-        let f = (resolve-zip-filter $ctx.workdir $ctx.filter? $trg $ctx.version? $ctx.strip?)
+        let f = (resolve-zip-filter $ctx.workdir $ctx.filter? $trg $ctx.name $ctx.version? $ctx.strip?)
         let u = $getter | merge {
             decompress: $decmp
             target: $ctx.file
@@ -345,12 +348,13 @@ def resolve-unzip [getter ctx] {
 
 def resolve-download-filename [ctx] {
     let ver = $ctx.version
+    let name = $ctx.name
     let fn = $ctx.filename?
-    let url = $ctx.url | resolve-filename $ver
+    let url = $ctx.url | resolve-filename $name $ver
     let file = if ($fn | is-empty) {  $url | split row '/' | last } else { $fn }
-    let file = $file | resolve-filename $ver
+    let file = $file | resolve-filename $name $ver
     let workdir = if ($ctx.workdir? | is-empty) { null } else {
-        $ctx.workdir | resolve-filename $ver
+        $ctx.workdir | resolve-filename $name $ver
     }
     { url: $url, file: $file, workdir: $workdir }
 }
@@ -409,7 +413,9 @@ def gen-shell [it type] {
 def resolve-recipe [ctx name] {
     let vs = $ctx.data.versions
     let version = if $name in $vs { $vs | get $name } else { "" }
-    let install = ($ctx.defs | get $name).install?
+    let df = $ctx.defs | get $name
+    let workdir = $df.workdir?
+    let install = $df.install?
     let install = if ($install | is-empty) { [] } else { $install }
     $install
     | each {|x|
@@ -418,6 +424,7 @@ def resolve-recipe [ctx name] {
         {
             cache: $ctx.cache?
             target: $ctx.target?
+            workdir: $workdir
         }
         | merge $d
         | merge {

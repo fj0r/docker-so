@@ -92,11 +92,11 @@ defs:
       - index: ghc
       - trim: null
       - only-nums: null
+    workdir: /tmp/%n-%v
     install:
     - download:
         url: https://downloads.haskell.org/~ghc/%v/ghc-%v-x86_64-deb11-linux.tar.xz
         strip: 1
-        workdir: /tmp/ghc-%v
   haskell-language-server:
     version:
       url: https://api.github.com/repos/haskell/haskell-language-server/releases/latest
