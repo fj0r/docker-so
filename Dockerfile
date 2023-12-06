@@ -1,9 +1,9 @@
 ARG BASEIMAGE=fj0rd/scratch:nushell
 FROM ${BASEIMAGE}
 
-COPY npkg /opt/npkg
+COPY npup /opt/npup
 
-RUN nu /opt/npkg/run.nu setup --clean \
+RUN nu /opt/npup/run.nu setup --clean \
     base \
     nvim \
     http \

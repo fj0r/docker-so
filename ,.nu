@@ -4,16 +4,16 @@ export def main [...args:string@compos] {
             nerdctl build -t fj0rd/so:test .
         }
         gensh => {
-            nu npkg/run.nu gensh $args.1  --clean nu nvim-js exec http lsp-rust python yaml haskell
+            nu npup/run.nu gensh $args.1  --clean nu nvim-js exec http lsp-rust python yaml haskell
         }
         update => {
-            nu npkg/run.nu update
+            nu npup/run.nu update
         }
         download => {
-            nu npkg/run.nu download --cache http://file.s/npkg
+            nu npup/run.nu download --cache http://file.s/npup
         }
         debug => {
-            nu npkg/run.nu debug nu nvim-js exec http
+            nu npup/run.nu debug nu nvim-js exec http
         }
         _ => {
             echo 'no act'
