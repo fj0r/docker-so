@@ -15,6 +15,9 @@ export def main [...args:string@compos] {
         debug => {
             nu npup/run.nu debug nu nvim-js exec http
         }
+        sync => {
+            rsync -avP ./npup/ ~/world/npup/
+        }
         _ => {
             echo 'no act'
         }
@@ -30,5 +33,6 @@ def compos [...context: string] {
         { value: update, description: 'versions' }
         { value: download, description: 'assets' }
         { value: debug, description: 'xxx' }
+        { value: sync, description: 'assets' }
     ]
 }
