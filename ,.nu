@@ -1,10 +1,10 @@
-export def main [...args:string@compos] {
+export def main [...args:string@compos, -c: string=''] {
     match $args.0 {
         build => {
             nerdctl build -t fj0rd/so:test .
         }
         gensh => {
-            nu npup/run.nu gensh $args.1  --clean nu nvim-js exec http lsp-rust python yaml haskell
+            nu npup/run.nu gensh $args.1  --clean nu nvim-js exec http lsp-rust python yaml haskell --cache $c
         }
         update => {
             nu npup/run.nu update
