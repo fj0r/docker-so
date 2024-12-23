@@ -56,5 +56,5 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            BASEIMAGE=fj0rd/scratch:nushell
+            message=${{ github.event.head_commit.message }}
 
