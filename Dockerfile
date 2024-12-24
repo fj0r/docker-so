@@ -1,13 +1,14 @@
-FROM ghcr.io/fj0r/io
+ARG BASEIMAGE=debian:bookworm-slim
+FROM ghcr.io/fj0r/io:__dropbear__ as dropbear
 
-ARG message
+FROM ${BASEIMAGE}
 
-ARG STACK_INFO_URL="https://www.stackage.org/lts"
-RUN set -eux \
-  ; ghc_ver=$(nu -c "'${message}' \
-            | parse -r '\\+ghc_ver=(?<v>[0-9\\.]+)' | get -i v.0 \
-            | default (http get -H [Accept application/json] ${STACK_INFO_URL} \
-            | get snapshot.ghc \
-            )") \
-  ; echo "++${ghc_ver}++"
+EXPOSE 22
+VOLUME /world
 
+ENV XDG_CONFIG_HOME=/etc \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    TIMEZONE=Asia/Shanghai
+
+COPY --from=dropbear / /
