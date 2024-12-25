@@ -1,0 +1,64 @@
+components:
+    http-client:
+        apt: [curl, ca-certificates]
+        apt-deps: [foobar]
+    net-utils:
+        apt: [rsync, tcpdump, socat]
+    websocket:
+        http:
+        - name: vi/websocat
+          version:
+              type: github
+              repo: vi/websocat
+    network:
+        apt: [lsof, inetutils-ping, iproute2, iptables, net-tools]
+    sys:
+        apt: [sudo, procps, htop, cron, tzdata]
+    security:
+        apt: [openssl]
+    utils:
+        apt: [sqlite3, jq, patch, tree, logrotate]
+        http:
+        - name: ripgrep
+          version:
+              type: github
+              repo: BurntSushi/ripgrep
+        - name: fd
+          version:
+              type: github
+              repo: sharkdp/fd
+    disk:
+        http:
+        - name: dust
+          version:
+              type: github
+              repo: bootandy/dust
+    compress:
+        apt: [xz-utils, zstd, zip, unzip]
+    tunnel:
+        http:
+        - name: wstunnel
+          version:
+              type: github
+              repo: erebe/wstunnel
+    quickjs:
+        http:
+        - name: quickjs
+          version:
+              type: html
+              url: https://bellard.org/quickjs/
+
+layers:
+    base:
+    - http-client
+    - net-utils
+    - websocket
+    - network
+    - sys
+    - security
+    - utils
+    - disk
+    - compress
+    - tunnel
+    - quickjs
+
