@@ -1,7 +1,43 @@
 ARG BASEIMAGE=debian:bookworm-slim
-FROM ghcr.io/fj0r/io:__dropbear__ as dropbear
+
+FROM ${BASEIMAGE} as dropbear
+
+RUN set -eux \
+  ; apt-get update \
+  ; DEBIAN_FRONTEND=noninteractive \
+    apt-get install -y --no-install-recommends \
+        git gnupg build-essential curl jq ca-certificates \
+        automake autoconf \
+        # libz libcrypto
+        libssl-dev zlib1g-dev \
+  ; mkdir /build /target
+
+WORKDIR /build
+
+RUN set -eux \
+  ; mkdir dropbear \
+  ; dropbear_url=$(curl --retry 3 -sSL https://api.github.com/repos/mkj/dropbear/releases -H 'Accept: application/vnd.github.v3+json' | jq -r '.[0].tarball_url') \
+  ; curl --retry 3 -sSL ${dropbear_url} | tar zxf - -C dropbear --strip-components=1 \
+  ; cd dropbear \
+  ; autoconf && autoheader && ./configure --enable-static \
+  ; make PROGRAMS="dropbear dbclient scp dropbearkey dropbearconvert" \
+  ; mkdir -p /target/bin \
+  ; mv dbclient dropbear scp dropbearkey dropbearconvert /target/bin \
+  ;
+
+RUN set -eux \
+  ; git clone --depth=1 https://github.com/openssh/openssh-portable.git \
+  ; cd openssh-portable \
+  ; autoreconf \
+  ; ./configure \
+  ; make sftp-server \
+  ; mkdir -p /target/libexec \
+  ; mv sftp-server /target/libexec \
+  ;
+
 
 FROM ${BASEIMAGE}
+COPY --from=dropbear /target /usr
 
 EXPOSE 22
 VOLUME /world
@@ -9,20 +45,15 @@ VOLUME /world
 ENV XDG_CONFIG_HOME=/etc \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    TIMEZONE=Asia/Shanghai
-
-COPY --from=dropbear / /
-
-# ca-certificates \
-ENV BUILD_DEPS \
-    jq
+    TIMEZONE=Asia/Shanghai \
+    BUILD_DEPS="jq"
 
 RUN set -eux \
   ; apt-get update \
   ; apt-get upgrade -y \
   ; DEBIAN_FRONTEND=noninteractive \
     apt-get install -y --no-install-recommends \
-        sudo curl tzdata ${BUILD_DEPS:-} \
+        sudo tzdata curl ca-certificates ${BUILD_DEPS:-} \
   \
   ; nu_ver=$(curl --retry 3 -sSL https://api.github.com/repos/nushell/nushell/releases/latest | jq -r '.tag_name') \
   ; nu_url="https://github.com/nushell/nushell/releases/download/${nu_ver}/nu-${nu_ver}-x86_64-unknown-linux-musl.tar.gz" \
