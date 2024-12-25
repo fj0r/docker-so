@@ -28,7 +28,7 @@ def install-components [] {
             apt_update
             apt_install $o.apt $o.apt-deps
             http_install $o.http
-            apt_uninstall $o.apt-deps
+            apt_uninstall $o.apt $o.apt-deps
             apt_clean
         }
         'Alpine Linux' => {
@@ -36,14 +36,14 @@ def install-components [] {
             apk_update
             apk_install $o.apk $o.apk-deps
             http_install $o.http
-            apk_uninstall $o.apk-deps
+            apk_uninstall $o.apt $o.apk-deps
         }
         'Arch Linux' => {
             use pacman.nu *
             pacman_update
             pacman_install $o.apt $o.apt-deps
             http_install $o.http
-            pacman_uninstall $o.apt-deps
+            pacman_uninstall $o.apt $o.apt-deps
             pacman_clean
         }
         _ => {

@@ -47,6 +47,13 @@ components:
           version:
               type: html
               url: https://bellard.org/quickjs/
+    rust:
+        http:
+        - name: cargo
+          version:
+              type: html
+          packages:
+            - tokio
 
 layers:
     base:
