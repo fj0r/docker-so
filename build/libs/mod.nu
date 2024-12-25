@@ -20,7 +20,9 @@ def resolve-components [conf] {
 def install-components [] {
     let o = $in
     use http.nu *
-    match (sys host).name {
+    use log.nu
+    let sys = (sys host).name
+    match $sys {
         'Debian GNU/Linux' | 'Ubuntu' => {
             use apt.nu *
             apt_update
@@ -43,6 +45,9 @@ def install-components [] {
             http_install $o.http
             pacman_uninstall $o.apt-deps
             pacman_clean
+        }
+        _ => {
+            log level 5 $"Not supported on ($sys)"
         }
     }
 }

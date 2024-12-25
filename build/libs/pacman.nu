@@ -6,13 +6,13 @@ export def pacman_update [] {
 
 export def pacman_install [...pkg] {
     let p = $pkg | flatten | uniq
-    log level 4 apt install ...$p
+    log level 4 install ...$p
     $env.DEBIAN_FRONTEND = 'noninteractive'
     print $"apt-get install -y --no-install-recommends ($p)"
 }
 
 export def pacman_uninstall [pkg] {
-    log level 4 apt remove ...$pkg
+    log level 4 remove ...$pkg
     print $"apt-get purge -y --auto-remove ($pkg)"
 }
 
