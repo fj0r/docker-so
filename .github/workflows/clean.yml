@@ -1,0 +1,85 @@
+name: clean
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  workflow_run:
+    workflows: ["base"]
+    branches: [ main ]
+    types:
+      - completed
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: fj0r/io
+
+
+jobs:
+  build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: fj0r
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+
+      - name: Delete untagged ghcr
+        uses: Chizkiyahu/delete-untagged-ghcr-action@v3
+        with:
+          # Personal access token (PAT) used to fetch the repository. The PAT is configured
+          # with the local git config, which enables your scripts to run authenticated git
+          # commands. The post-job step removes the PAT.
+          # needs delete:packages permissions
+          # required: true
+          # [Learn more about creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
+          token: ${{ secrets.GHCR_TOKEN }}
+          # Repository name or  name with owner
+          # Delete only from repository name
+          # Default: ${{ github.repository }}
+          repository: ${{ github.repository }}
+          # 'The repository owner name'
+          # Default: ${{ github.repository_owner }}
+          repository_owner: ${{ github.repository_owner }}
+          # 'The package names'
+          # Delete only from comma separated package names
+          # required: false
+          package_name: ''
+          # Delete only package versions without tag
+          # required: false
+          # Default: true
+          # choices: true, false
+          untagged_only: true
+          # Except untagged multiplatform packages from deletion
+          # only for untagged_only=true
+          # needs docker installed
+          except_untagged_multiplatform: false
+          # the owner type
+          # required: true
+          # choices: org, user
+          owner_type: user

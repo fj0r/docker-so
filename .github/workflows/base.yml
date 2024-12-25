@@ -52,7 +52,8 @@ jobs:
         uses: docker/build-push-action@v4
         if: ${{ false }}
         with:
-          context: .
+          context: base
+          file: base/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:nu
           labels: ${{ steps.meta.outputs.labels }}
@@ -63,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: builder.Dockerfile
+          file: base/builder.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:builder
           labels: ${{ steps.meta.outputs.labels }}
@@ -73,8 +74,8 @@ jobs:
       - name: Build base
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: base.Dockerfile
+          context: base
+          file: base/base.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:base
           labels: ${{ steps.meta.outputs.labels }}

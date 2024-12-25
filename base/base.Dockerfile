@@ -5,11 +5,10 @@ ENV PREBOOT=
 ENV POSTBOOT=
 ENV CRONFILE=
 COPY entrypoint /entrypoint
-COPY build /opt/build
 
 ENV git_pull=
 #ENV ed25519_xxx=
 
 ENTRYPOINT [ "/entrypoint/init.sh" ]
 
-RUN nu /opt/build/main.nu docker
+RUN nu /opt/build/main.nu base
