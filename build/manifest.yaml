@@ -47,6 +47,12 @@ components:
           version:
               type: html
               url: https://bellard.org/quickjs/
+    neovim:
+        http:
+        - name: neovim
+    neovim-config:
+        git:
+        - name: neovim-config
     rust:
         http:
         - name: cargo
@@ -54,8 +60,23 @@ components:
               type: html
           packages:
             - tokio
+    bootstrap:
+        shell:
+        - name: bootstrap
+
+
+
 
 layers:
+    bootstrap:
+    - bootstrap
+    neovim:
+    - neovim
+    neovim-config:
+    - neovim-config
+    neovim-full:
+    - neovim
+    - neovim-config
     base:
     - http-client
     - net-utils

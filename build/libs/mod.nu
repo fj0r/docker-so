@@ -30,14 +30,14 @@ def resolve-components [conf] {
 
 def install-components [] {
     let o = $in
-    use http.nu *
+    use custom.nu *
     let sys = (sys host).name
     match $sys {
         'Debian GNU/Linux' | 'Ubuntu' => {
             use apt.nu *
             apt_update
             apt_install $o.apt $o.apt-deps
-            http_install $o.http
+            custom_install $o
             apt_uninstall $o.apt $o.apt-deps
             apt_clean
         }
@@ -45,14 +45,14 @@ def install-components [] {
             use apk.nu *
             apk_update
             apk_install $o.apk $o.apk-deps
-            http_install $o.http
+            custom_install $o
             apk_uninstall $o.apt $o.apk-deps
         }
         'Arch Linux' => {
             use pacman.nu *
             pacman_update
             pacman_install $o.apt $o.apt-deps
-            http_install $o.http
+            custom_install $o
             pacman_uninstall $o.apt $o.apt-deps
             pacman_clean
         }

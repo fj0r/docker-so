@@ -1,4 +1,8 @@
-export def run [...layer] {
+def list-layers [] {
+    open build/manifest.yaml | get layers | columns
+}
+
+export def run [...layer:string@list-layers] {
     nu build/main.nu ...$layer
 }
 
