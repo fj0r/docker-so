@@ -1,7 +1,7 @@
 components:
     http-client:
         apt: [curl, ca-certificates]
-        apt-deps: [foobar]
+        apt-deps: []
     net-utils:
         apt: [rsync, tcpdump, socat]
     websocket:

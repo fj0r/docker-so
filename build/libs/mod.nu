@@ -1,4 +1,15 @@
-export def build [conf: record target: list<string>] {
+use log.nu
+
+export def build [
+    conf: record
+    target: list<string>
+    --proxy: string
+] {
+    if ($proxy | is-not-empty) {
+        log level 1 use proxy $proxy
+        $env.http_proxy = $proxy
+        $env.https_proxy = $proxy
+    }
     $target
     | reduce -f [] {|t,a|
         if ($t in $conf.layers) {
@@ -20,7 +31,6 @@ def resolve-components [conf] {
 def install-components [] {
     let o = $in
     use http.nu *
-    use log.nu
     let sys = (sys host).name
     match $sys {
         'Debian GNU/Linux' | 'Ubuntu' => {

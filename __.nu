@@ -15,7 +15,7 @@ export def `build base` [] {
     build builder
     (
         ^$env.CONTCTL build
-        -f base/base.Dockerfile
+        -f base/base-proxy.Dockerfile
         -t so:base
         --build-arg BASEIMAGE=so:builder
         base
