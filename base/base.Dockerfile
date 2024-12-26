@@ -1,4 +1,5 @@
-FROM ghcr.lizzie.fun/fj0r/so:builder
+ARG BASEIMAGE=ghcr.lizzie.fun/fj0r/so:builder
+FROM ${BASEIMAGE}
 
 ENV DEBUGE=
 ENV PREBOOT=
