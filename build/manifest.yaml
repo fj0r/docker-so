@@ -70,7 +70,7 @@ components:
 
 
 layers:
-    test:
+    test-deps:
     - net-utils
     bootstrap:
     - bootstrap
