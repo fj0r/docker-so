@@ -10,8 +10,8 @@ export def apt_install [...pkg] {
     }
 }
 
-export def apt_uninstall [pkg, deps] {
-    uninstall $pkg $deps --act {|p|
+export def apt_uninstall [pkg, rmv] {
+    uninstall $pkg $rmv --act {|p|
         dry-run apt-get purge -y --auto-remove ...$p
     }
 }

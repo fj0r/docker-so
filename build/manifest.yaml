@@ -1,9 +1,10 @@
 components:
     http-client:
         apt: [curl, ca-certificates]
-        apt-deps: []
     net-utils:
         apt: [rsync, tcpdump, socat]
+        deps: [network]
+        build-deps: []
     websocket:
         http:
         - name: vi/websocat
@@ -68,6 +69,8 @@ components:
 
 
 layers:
+    test:
+    - net-utils
     bootstrap:
     - bootstrap
     neovim:

@@ -10,8 +10,8 @@ export def pacman_install [...pkg] {
     }
 }
 
-export def pacman_uninstall [pkg, deps] {
-    uninstall $pkg $deps --act {|p|
+export def pacman_uninstall [pkg, rmv] {
+    uninstall $pkg $rmv --act {|p|
         dry-run pacman -Rcns ...$p
     }
 }

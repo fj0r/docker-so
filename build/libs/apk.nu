@@ -11,8 +11,8 @@ export def apk_install [...pkg] {
     }
 }
 
-export def apk_uninstall [pkg, deps] {
-    uninstall $pkg $deps --act {|p|
+export def apk_uninstall [pkg, rmv] {
+    uninstall $pkg $rmv --act {|p|
         dry-run apk del ...$p
     }
 }

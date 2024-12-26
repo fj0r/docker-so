@@ -1,7 +1,7 @@
 use log.nu
 
 export def custom_install [pkg] {
-    for i in $pkg.http {
+    for i in $pkg.http? {
         log level 3 setup {type: http, name: $i.name}
     }
     for i in $pkg.git? {
