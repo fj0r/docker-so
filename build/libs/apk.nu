@@ -1,22 +1,22 @@
 use pkg.nu *
 
 export def apk_update [] {
-    apk update
-    apk upgrade
+    dry-run apk update
+    dry-run apk upgrade
 }
 
 export def apk_install [...pkg] {
     install $pkg --act {|p|
-        apk add --no-cache ...$p
+        dry-run apk add --no-cache ...$p
     }
 }
 
 export def apk_uninstall [pkg, deps] {
     uninstall $pkg $deps --act {|p|
-        apk del ...$p
+        dry-run apk del ...$p
     }
 }
 
 export def apk_clean [] {
-    rm -rf /var/cache/apk/*
+    dry-run rm -rf /var/cache/apk/*
 }

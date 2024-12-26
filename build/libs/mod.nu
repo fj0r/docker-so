@@ -4,6 +4,8 @@ export def build [
     conf: record
     target: list<string>
     --proxy: string
+    --sys: string
+    --dry-run
 ] {
     if ($proxy | is-not-empty) {
         log level 1 use proxy $proxy
@@ -18,7 +20,7 @@ export def build [
         }
     }
     | resolve-components $conf.components
-    | install-components
+    | install-components --dry-run=$dry_run --sys $sys
 }
 
 def resolve-components [conf] {
@@ -28,10 +30,24 @@ def resolve-components [conf] {
     }
 }
 
-def install-components [] {
+def install-components [
+    --dry-run
+    --sys:string
+] {
     let o = $in
     use custom.nu *
-    let sys = (sys host).name
+
+    let sys = if ($sys | is-empty) {
+        (sys host).name
+    } else {
+        $sys
+    }
+
+    if $dry_run {
+        log level 5 DRY RUN
+        $env.dry_run = true
+    }
+
     match $sys {
         'Debian GNU/Linux' | 'Ubuntu' => {
             use apt.nu *
@@ -46,14 +62,14 @@ def install-components [] {
             apk_update
             apk_install $o.apk $o.apk-deps
             custom_install $o
-            apk_uninstall $o.apt $o.apk-deps
+            apk_uninstall $o.apk $o.apk-deps
         }
         'Arch Linux' => {
             use pacman.nu *
             pacman_update
-            pacman_install $o.apt $o.apt-deps
+            pacman_install $o.pacman $o.pacman-deps
             custom_install $o
-            pacman_uninstall $o.apt $o.apt-deps
+            pacman_uninstall $o.pacman $o.pacman-deps
             pacman_clean
         }
         _ => {

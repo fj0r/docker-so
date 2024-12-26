@@ -13,3 +13,11 @@ export def uninstall [pkg, deps, --act: closure] {
         do $act $p
     }
 }
+
+export def --wrapped dry-run [...cmds] {
+    if ($env.dry_run? | default false) {
+        log level 1 ...$cmds
+    } else {
+        ^$cmds.0 ...($cmds | range 1..)
+    }
+}

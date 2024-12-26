@@ -1,9 +1,10 @@
 def list-layers [] {
     open build/manifest.yaml | get layers | columns
+    | { completions: $in, options: { sort: false } }
 }
 
 export def run [...layer:string@list-layers] {
-    nu build/main.nu ...$layer
+    nu build/main.nu ...$layer --dry-run --sys Ubuntu
 }
 
 export def `build builder` [] {
