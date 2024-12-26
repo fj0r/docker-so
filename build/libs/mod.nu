@@ -27,16 +27,25 @@ def resolve-components [conf] {
     let r = $in | reduce -f {} {|i,a|
         $a | merge deep --strategy=append ($conf | get $i)
     }
+
     let deps = $r.deps? | uniq | reduce -f {} {|y, b|
         $b | merge deep --strategy=append ($conf | get $y)
     }
+
     let build_deps = $r.build-deps? | uniq | reduce -f {} {|y, b|
         $b | merge deep --strategy=append ($conf | get $y)
     }
+
     let r = $r
+    | merge deep --strategy=append {deps:[], build-deps:[]}
     | reject deps build-deps
     | merge deep --strategy=append $deps
-    {pkg: $r, build_deps: $build_deps}
+
+    let b = $r | columns
+    | reduce -f {} {|i,a| $a | insert $i [] }
+    | merge deep --strategy=append $build_deps
+
+    {pkg: $r, build_deps: $b}
 }
 
 def install-components [
@@ -63,24 +72,24 @@ def install-components [
         'Debian GNU/Linux' | 'Ubuntu' => {
             use apt.nu *
             apt_update
-            apt_install $pkg.apt $build_deps.apt?
+            apt_install $pkg.apt $build_deps.apt
             custom_install $o
-            apt_uninstall $pkg.apt $build_deps.apt?
+            apt_uninstall $pkg.apt $build_deps.apt
             apt_clean
         }
         'Alpine Linux' => {
             use apk.nu *
             apk_update
-            apk_install $pkg.apk $build_deps.apk?
+            apk_install $pkg.apk $build_deps.apk
             custom_install $o
-            apk_uninstall $pkg.apk $build_deps.apk?
+            apk_uninstall $pkg.apk $build_deps.apk
         }
         'Arch Linux' => {
             use pacman.nu *
             pacman_update
-            pacman_install $pkg.pacman $build_deps.pacman?
+            pacman_install $pkg.pacman $build_deps.pacman
             custom_install $o
-            pacman_uninstall $pkg.pacman $build_deps.pacman?
+            pacman_uninstall $pkg.pacman $build_deps.pacman
             pacman_clean
         }
         _ => {

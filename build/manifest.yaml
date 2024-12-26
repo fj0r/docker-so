@@ -3,6 +3,7 @@ components:
         apt: [curl, ca-certificates]
     net-utils:
         apt: [rsync, tcpdump, socat]
+        # components
         deps: [network]
         build-deps: []
     websocket:
