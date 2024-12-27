@@ -22,7 +22,7 @@ def run_action [o] {
             dry-run git clone --depth=3 $o.url $o.dist
         }
         cmd => {
-            dry-run bash -c $o.cmd
+            dry-run $o.cmd
         }
         shell => {
             dry-run print $o.cmd?
