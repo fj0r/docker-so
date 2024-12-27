@@ -8,5 +8,6 @@ export def main [
 ] {
     let pwd = $env.FILE_PWD?
     let conf = [$pwd manifest.yaml] | path join | open $in
-    build $conf $target --proxy $proxy --dry-run=$dry_run --sys $sys
+    let versions = [$pwd versions.yaml] | path join | open $in
+    build $conf $target --proxy $proxy --dry-run=$dry_run --sys $sys --versions $versions
 }

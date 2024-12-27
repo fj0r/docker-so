@@ -46,7 +46,7 @@ export def extract [input act args?] {
     }
 }
 
-export def get-version [o] {
+export def get-version [o name] {
     mut headers = []
     let url = if $o.type == github {
         $headers ++= [-H 'Accept: application/json']
@@ -54,12 +54,20 @@ export def get-version [o] {
     } else {
         $o.url
     }
+
     let r = curl -sSL ...$headers $url
-    
-    $o.extract? | reduce -f $r {|x, acc|
+
+    let v = $o.extract? | reduce -f $r {|x, acc|
         let r = $x | transpose k v | first
         extract $acc $r.k $r.v
     }
+
+    if ($name | is-not-empty) {
+        let f = [$env.FILE_PWD versions.yaml] | path join
+        open $f | upsert $name $v | collect | save -f $f
+    }
+
+    $v
 }
 
 export def download [o, version] {
