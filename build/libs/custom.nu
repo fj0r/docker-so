@@ -6,8 +6,8 @@ export def custom_install [o] {
     let types = $pkg | columns
     for t in $types {
         for i in ($pkg | get $t) {
-            let j = if $t == pipeline { $i } else { $i | upsert type $t }
-            log level 3 {type: $j.type, name: $j.name?}
+            let j = $i | upsert type $t
+            log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
             run_action $j
         }
     }
@@ -27,8 +27,10 @@ def run_action [o] {
         shell => {
             dry-run print $o.cmd?
         }
-        pipeline => {
+        flow => {
+            for i in $o.pipeline? {
+                run_action $i
+            }
         }
     }
-
 }

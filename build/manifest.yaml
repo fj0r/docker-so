@@ -8,8 +8,7 @@ components:
         build-deps: []
     websocket:
         http:
-        - name: vi/websocat
-          version:
+        - version:
               type: github
               repo: vi/websocat
     network:
@@ -21,26 +20,22 @@ components:
     utils:
         apt: [sqlite3, jq, patch, tree, logrotate]
         http:
-        - name: ripgrep
-          version:
+        - version:
               type: github
               repo: BurntSushi/ripgrep
-        - name: fd
-          version:
+        - version:
               type: github
               repo: sharkdp/fd
     disk:
         http:
-        - name: dust
-          version:
+        - version:
               type: github
               repo: bootandy/dust
     compress:
         apt: [xz-utils, zstd, zip, unzip]
     tunnel:
         http:
-        - name: wstunnel
-          version:
+        - version:
               type: github
               repo: erebe/wstunnel
     quickjs:
@@ -52,14 +47,18 @@ components:
     neovim:
         http:
         - name: neovim
+          version:
+              type: github
+              url: ''
     neovim-config:
-        pipeline:
-        - type: git
-          url: https://github.com/fj0r/nvim-lua.git
-          dist: ~/.config/nvim
-        - type: cmd
-          cmd:
-          - nvim --headless "+Lazy! sync" +qa
+        flow:
+        - pipeline:
+          - type: git
+            url: https://github.com/fj0r/nvim-lua.git
+            dist: ~/.config/nvim
+          - type: cmd
+            cmd:
+            - nvim --headless "+Lazy! sync" +qa
     rust:
         http:
         - name: cargo

@@ -23,17 +23,29 @@ export def build [
     | install-components --dry-run=$dry_run --sys $sys
 }
 
+def enrich [o name]  {
+    let x = $o | get $name
+    let ks = $x | columns
+    $ks | reduce -f $x {|i,a|
+        if ($a | get $i | describe | str starts-with 'table<') {
+            $a | update $i ($a | get $i | upsert group $name)
+        } else {
+            $a
+        }
+    }
+}
+
 def resolve-components [conf] {
     let r = $in | reduce -f {} {|i,a|
-        $a | merge deep --strategy=append ($conf | get $i)
+        $a | merge deep --strategy=append (enrich $conf $i)
     }
 
     let deps = $r.deps? | uniq | reduce -f {} {|y, b|
-        $b | merge deep --strategy=append ($conf | get $y)
+        $b | merge deep --strategy=append (enrich $conf $y)
     }
 
     let build_deps = $r.build-deps? | uniq | reduce -f {} {|y, b|
-        $b | merge deep --strategy=append ($conf | get $y)
+        $b | merge deep --strategy=append (enrich $conf $y)
     }
 
     let r = $r
