@@ -53,8 +53,13 @@ components:
         http:
         - name: neovim
     neovim-config:
-        git:
-        - name: neovim-config
+        pipeline:
+        - type: git
+          url: https://github.com/fj0r/nvim-lua.git
+          dist: ~/.config/nvim
+        - type: cmd
+          cmd:
+          - nvim --headless "+Lazy! sync" +qa
     rust:
         http:
         - name: cargo
