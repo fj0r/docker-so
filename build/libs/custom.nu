@@ -1,5 +1,6 @@
 use log.nu
-use pkg.nu *
+use utils.nu *
+use extractor.nu *
 
 export def custom_install [o] {
     let pkg = $o.pkg | reject apt? apk? pacman?
@@ -16,16 +17,20 @@ export def custom_install [o] {
 def run_action [o] {
     match $o.type {
         http => {
-            dry-run curl -sSL $o.url?
+            if $o.group == neovim {
+                let version = get-version $o.version
+                log level 1 {group: $o.group, version: $version} update version
+                run download $o.download $version
+            }
         }
         git => {
-            dry-run git clone --depth=3 $o.url $o.dist
+            run git clone --depth=3 $o.url $o.dist
         }
         cmd => {
-            dry-run $o.cmd
+            run $o.cmd
         }
         shell => {
-            dry-run print $o.cmd?
+            run print $o.cmd?
         }
         flow => {
             for i in $o.pipeline? {
@@ -34,3 +39,5 @@ def run_action [o] {
         }
     }
 }
+
+

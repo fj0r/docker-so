@@ -49,7 +49,17 @@ components:
         - name: neovim
           version:
               type: github
-              url: ''
+              url: 'neovim/neovim'
+              extract:
+              - from-json: null
+              - index: name
+              - only-nums: null
+          download:
+              url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+              filename: nvim-{{version}}-linux64.tar.gz
+              strip: 1
+              target: /usr/local
+
     neovim-config:
         flow:
         - pipeline:
