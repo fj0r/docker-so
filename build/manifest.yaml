@@ -11,6 +11,11 @@ components:
         - version:
               type: github
               repo: vi/websocat
+              extract:
+              - from-json: null
+              - index: tag_name
+          download:
+              url: https://github.com/vi/websocat/releases/download/{{version}}/websocat.x86_64-unknown-linux-musl
     network:
         apt: [lsof, inetutils-ping, iproute2, iptables, net-tools]
     sys:
@@ -23,14 +28,29 @@ components:
         - version:
               type: github
               repo: BurntSushi/ripgrep
+              extract:
+              - from-json: null
+              - index: tag_name
+          download:
+              url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{{version}}-x86_64-unknown-linux-musl.tar.gz
         - version:
               type: github
               repo: sharkdp/fd
+              extract:
+              - from-json: null
+              - index: tag_name
+          download:
+              url: https://github.com/sharkdp/fd/releases/latest/download/fd-{{version}}-x86_64-unknown-linux-musl.tar.gz
     disk:
         http:
         - version:
               type: github
               repo: bootandy/dust
+              extract:
+              - from-json: null
+              - index: tag_name
+          download:
+              url: https://github.com/bootandy/dust/releases/latest/download/dust-{{version}}-x86_64-unknown-linux-musl.tar.gz
     compress:
         apt: [xz-utils, zstd, zip, unzip]
     tunnel:
@@ -38,18 +58,28 @@ components:
         - version:
               type: github
               repo: erebe/wstunnel
+              extract:
+              - from-json: null
+              - index: tag_name
+              - only-nums: null
+          download:
+              url: https://github.com/erebe/wstunnel/releases/download/v{{version}}/wstunnel_{{version}}_linux_amd64.tar.gz
     quickjs:
         http:
         - name: quickjs
           version:
               type: html
               url: https://bellard.org/quickjs/
+              extract:
+              - regexp: 'href="quickjs-([0-9\-]+).tar.xz"'
+          download:
+              url: https://bellard.org/quickjs/binary_releases/quickjs-linux-x86_64-{{version}}.zip
     neovim:
         http:
         - name: neovim
           version:
               type: github
-              url: 'neovim/neovim'
+              repo: 'neovim/neovim'
               extract:
               - from-json: null
               - index: name

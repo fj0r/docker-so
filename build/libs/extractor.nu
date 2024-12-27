@@ -1,3 +1,5 @@
+use utils.nu *
+
 export def extract [input act args?] {
     match $act {
         from-json => {
@@ -48,19 +50,19 @@ export def get-version [o] {
     mut headers = []
     let url = if $o.type == github {
         $headers ++= [-H 'Accept: application/json']
-        $"https://api.github.com/repos/($o.url)/releases/latest"
+        $"https://api.github.com/repos/($o.repo)/releases/latest"
     } else {
         $o.url
     }
     let r = curl -sSL ...$headers $url
     
-    $o.extract | reduce -f $r {|x, acc|
+    $o.extract? | reduce -f $r {|x, acc|
         let r = $x | transpose k v | first
         extract $acc $r.k $r.v
     }
 }
 
 export def download [o, version] {
-    print $o $version
-    
+    let url = $o.url | str replace -a '{{version}}' $version
+    run curl -sSL $url
 }

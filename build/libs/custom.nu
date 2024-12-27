@@ -17,11 +17,9 @@ export def custom_install [o] {
 def run_action [o] {
     match $o.type {
         http => {
-            if $o.group == neovim {
-                let version = get-version $o.version
-                log level 1 {group: $o.group, version: $version} update version
-                run download $o.download $version
-            }
+            let version = get-version $o.version
+            log level 1 {group: $o.group, version: $version} update version
+            download $o.download $version
         }
         git => {
             run git clone --depth=3 $o.url $o.dist
