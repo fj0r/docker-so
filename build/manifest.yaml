@@ -8,7 +8,8 @@ components:
         build-deps: []
     websocket:
         http:
-        - version:
+        - name: websocat
+          version:
               type: github
               repo: vi/websocat
               extract:
@@ -25,7 +26,8 @@ components:
     utils:
         apt: [sqlite3, jq, patch, tree, logrotate]
         http:
-        - version:
+        - name: rg
+          version:
               type: github
               repo: BurntSushi/ripgrep
               extract:
@@ -33,7 +35,8 @@ components:
               - index: tag_name
           download:
               url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{{version}}-x86_64-unknown-linux-musl.tar.gz
-        - version:
+        - name: fd
+          version:
               type: github
               repo: sharkdp/fd
               extract:
@@ -43,7 +46,8 @@ components:
               url: https://github.com/sharkdp/fd/releases/latest/download/fd-{{version}}-x86_64-unknown-linux-musl.tar.gz
     disk:
         http:
-        - version:
+        - name: dust
+          version:
               type: github
               repo: bootandy/dust
               extract:
@@ -55,7 +59,8 @@ components:
         apt: [xz-utils, zstd, zip, unzip]
     tunnel:
         http:
-        - version:
+        - name: wstunnel
+          version:
               type: github
               repo: erebe/wstunnel
               extract:

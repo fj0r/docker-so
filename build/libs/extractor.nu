@@ -9,7 +9,8 @@ export def extract [input act args?] {
             $"($args)($input)"
         }
         index => {
-            let r = do -i { $input | get $args }
+            let p = $args | split row '.' | into cell-path
+            let r = do -i { $input | get $p }
             if ($r | is-empty) {
                 error make { msg: $"'($args)' not in ($input)" }
             } else {
