@@ -7,6 +7,7 @@ export def build [
     --sys: string
     --dry-run
     --versions: record
+    --save-versions
 ] {
     if ($proxy | is-not-empty) {
         log level 1 use proxy $proxy
@@ -21,7 +22,7 @@ export def build [
         }
     }
     | resolve-components $conf.components
-    | install-components --dry-run=$dry_run --sys $sys --versions $versions
+    | install-components --dry-run=$dry_run --sys $sys --versions $versions --save-versions=$save_versions
 }
 
 def enrich [o name]  {
@@ -65,6 +66,7 @@ def install-components [
     --dry-run
     --sys:string
     --versions: record
+    --save-versions
 ] {
     let o = $in
     let pkg = $o.pkg
@@ -87,7 +89,7 @@ def install-components [
             use apt.nu *
             apt_update
             apt_install $pkg.apt $build_deps.apt
-            custom_install $o -v $versions
+            custom_install $o -v $versions --save-versions=$save_versions
             apt_uninstall $pkg.apt $build_deps.apt
             apt_clean
         }
@@ -95,14 +97,14 @@ def install-components [
             use apk.nu *
             apk_update
             apk_install $pkg.apk $build_deps.apk
-            custom_install $o -v $versions
+            custom_install $o -v $versions --save-versions=$save_versions
             apk_uninstall $pkg.apk $build_deps.apk
         }
         'Arch Linux' => {
             use pacman.nu *
             pacman_update
             pacman_install $pkg.pacman $build_deps.pacman
-            custom_install $o -v $versions
+            custom_install $o -v $versions --save-versions=$save_versions
             pacman_uninstall $pkg.pacman $build_deps.pacman
             pacman_clean
         }

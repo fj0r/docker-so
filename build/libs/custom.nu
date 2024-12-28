@@ -5,6 +5,7 @@ use extractor.nu *
 export def custom_install [
     o
     -v: record
+    --save-versions
 ] {
     let pkg = $o.pkg | reject apt? apk? pacman?
     let types = $pkg | columns
@@ -12,7 +13,7 @@ export def custom_install [
         for i in ($pkg | get $t) {
             let j = $i | upsert type $t
             log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
-            run_action $j -v $v
+            run_action $j -v $v --save-versions=$save_versions
         }
     }
 }
@@ -20,13 +21,14 @@ export def custom_install [
 def run_action [
     o
     -v: record
+    --save-versions
 ] {
     match $o.type {
         http => {
             let version = if (($o.name? | default '') in $v) {
                 $v | get $o.name
             } else {
-                get-version $o.version $o.name?
+                get-version $o.version $o.name? --save=$save_versions
             }
 
             log level 1 {group: $o.group, version: $version} update version
@@ -43,7 +45,7 @@ def run_action [
         }
         flow => {
             for i in $o.pipeline? {
-                run_action $i
+                run_action $i -v $v --save-versions=$save_versions
             }
         }
     }
