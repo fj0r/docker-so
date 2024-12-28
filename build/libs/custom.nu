@@ -1,6 +1,7 @@
 use log.nu
 use utils.nu *
 use extractor.nu *
+use downloader.nu *
 
 export def custom_install [
     o
@@ -50,5 +51,3 @@ def run_action [
         }
     }
 }
-
-

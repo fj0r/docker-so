@@ -71,7 +71,3 @@ export def get-version [o name --save] {
     $v
 }
 
-export def download [o, version] {
-    let url = $o.url | str replace -a '{{version}}' $version
-    run curl -sSL $url
-}
