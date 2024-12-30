@@ -34,6 +34,7 @@ def run_action [
 
             log level 1 {group: $o.group, version: $version} update version
             download $o.download $version
+            unpack
         }
         git => {
             run git clone --depth=3 $o.url $o.dist
