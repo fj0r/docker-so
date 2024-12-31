@@ -1,3 +1,4 @@
+prefix: /usr/local
 components:
     http-client:
         apt: [curl, ca-certificates]
@@ -18,7 +19,7 @@ components:
           download:
               url: https://github.com/vi/websocat/releases/download/{{version}}/websocat.x86_64-unknown-linux-musl
           install:
-              target: /usr/local/bin
+              target: /bin
               rename: websocat
     network:
         apt: [lsof, inetutils-ping, iproute2, iptables, net-tools]
@@ -39,7 +40,7 @@ components:
           download:
               url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{{version}}-x86_64-unknown-linux-musl.tar.gz
           install:
-              target: /usr/local/bin
+              target: /bin
               strip: 1
               filter: '*/rg'
         - name: fd
@@ -52,7 +53,7 @@ components:
           download:
               url: https://github.com/sharkdp/fd/releases/latest/download/fd-{{version}}-x86_64-unknown-linux-musl.tar.gz
           install:
-              target: /usr/local/bin
+              target: /bin
               strip: 1
               filter: '*/fd'
     disk:
@@ -67,7 +68,7 @@ components:
           download:
               url: https://github.com/bootandy/dust/releases/latest/download/dust-{{version}}-x86_64-unknown-linux-musl.tar.gz
           install:
-              target: /usr/local/bin
+              target: /bin
               strip: 1
               filter: '*/dust'
     compress:
@@ -85,7 +86,7 @@ components:
           download:
               url: https://github.com/erebe/wstunnel/releases/download/v{{version}}/wstunnel_{{version}}_linux_amd64.tar.gz
           install:
-              target: /usr/local/bin
+              target: /bin
               rename: wstunnel
     quickjs:
         http:
@@ -98,7 +99,7 @@ components:
           download:
               url: https://bellard.org/quickjs/binary_releases/quickjs-linux-x86_64-{{version}}.zip
           install:
-              target: /usr/local/bin
+              target: /bin
               filter: qjs
     neovim:
         http:
@@ -115,7 +116,7 @@ components:
               filename: nvim-{{version}}-linux64.tar.gz
           install:
               strip: 1
-              target: /usr/local
+              target: /
 
     neovim-config:
         flow:

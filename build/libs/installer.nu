@@ -1,7 +1,7 @@
 use log.nu *
 use utils.nu *
 
-export def install [inst, down] {
+export def install [inst, down, --prefix:string='/usr/local'] {
     let fmt = if ($inst.format? | is-not-empty ) {
         $inst.format
     } else {
@@ -29,18 +29,20 @@ export def install [inst, down] {
 
     mut tmp = ''
     mut cmds = [[[]]]
+    let target = [$prefix $inst.target] | str join
 
     if ($decmp | is-empty) {
-        $cmds.0.0 ++= [mv $down.file $inst.target]
-        $cmds ++= [[[chmod +x $inst.target]]]
+        let t = [$target $inst.rename] | path join
+        $cmds.0.0 ++= [mv $down.file $t]
+        $cmds ++= [[[chmod +x $t]]]
     } else if ($fmt == 'zip') {
         $tmp = mktemp -t unzip.XXX -d
         $cmds.0.0 ++= [unzip $down.file]
-        $cmds ++= [[[mv $down.file $inst.target]]]
+        $cmds ++= [[[mv $down.file $target]]]
     } else if ($fmt | str starts-with 'tar') {
         $cmds.0.0 ++= [cat $down.file]
         $cmds.0 ++= [[$decmp]]
-        $cmds.0.1 ++= [-C $inst.target]
+        $cmds.0.1 ++= [-C $target]
 
         if ($inst.strip? | is-not-empty) {
             $cmds.0.1 ++= [$"--strip-components=($inst.strip)"]
@@ -50,10 +52,11 @@ export def install [inst, down] {
             $cmds.0.1 ++= [--wildcards ($inst.filter | str join ' ')]
         }
     } else {
+        let t = [$target $inst.rename] | path join
         $cmds.0.0 ++= [cat $down.file]
         $cmds.0 ++= [[$decmp]]
-        $cmds.0 ++= [[save $inst.target]]
-        $cmds ++= [[[chmod +x $inst.target]]]
+        $cmds.0 ++= [[save $t]]
+        $cmds ++= [[[chmod +x $t]]]
     }
 
     log level 5 $cmds
