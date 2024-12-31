@@ -1,13 +1,11 @@
 use log.nu *
 use utils.nu *
 
-export def install [o, loc] {
-    log level 4 $o $loc
-}
-
-def resolve-format [ctx] {
-    let fmt = if ($ctx.format? | not-empty ) { $ctx.format } else {
-        let fn = $ctx.file | split row '.'
+export def install [inst, down] {
+    let fmt = if ($inst.format? | is-not-empty ) {
+        $inst.format
+    } else {
+        let fn = $down.file | split row '.'
         let zf = $fn | last
         if ($fn | range (-2..-2) | get 0) == 'tar' {
             $"tar.($zf)"
@@ -15,33 +13,48 @@ def resolve-format [ctx] {
             $zf
         }
     }
+
     let decmp = match $fmt {
-        'tar.gz'  => $"tar zxf"
-        'tar.zst' => $"zstd -d -T0 | tar xf"
-        'tar.bz2' => $"tar jxf"
-        'tar.xz'  => $"tar Jxf"
+        'tar.gz'  => $"tar zxf - "
+        'tar.zst' => $"zstd -d -T0 | tar xf -"
+        'tar.bz2' => $"tar jxf -"
+        'tar.xz'  => $"tar Jxf -"
         'gz'      => $"gzip -d"
         'zst'     => $"zstd -d"
         'bz2'     => $"bzip2 -d"
         'xz'      => $"xz -d"
         'zip'     => $"unzip"
-        _ => "(!unknown format)"
+        _ => ""
     }
-    mut override = false
-    let target = if $fmt == 'zip' {
-        $ctx.file
-    } else if not ($fmt | str starts-with 'tar.') {
-        $override = true
-        let n = if ($ctx.filter? | is-empty) { $ctx.name } else { $ctx.filter | first }
-        [$ctx.target $n] | path join
+
+    mut tmp = ''
+    mut cmds = [[[]]]
+
+    if ($decmp | is-empty) {
+        $cmds.0.0 ++= [mv $down.file $inst.target]
+        $cmds ++= [[[chmod +x $inst.target]]]
+    } else if ($fmt == 'zip') {
+        $tmp = mktemp -t unzip.XXX -d
+        $cmds.0.0 ++= [unzip $down.file]
+        $cmds ++= [[[mv $down.file $inst.target]]]
+    } else if ($fmt | str starts-with 'tar') {
+        $cmds.0.0 ++= [cat $down.file]
+        $cmds.0 ++= [[$decmp]]
+        $cmds.0.1 ++= [-C $inst.target]
+
+        if ($inst.strip? | is-not-empty) {
+            $cmds.0.1 ++= [$"--strip-components=($inst.strip)"]
+        }
+
+        if ($inst.filter? | is-not-empty) {
+            $cmds.0.1 ++= [--wildcards ($inst.filter | str join ' ')]
+        }
     } else {
-        $ctx.target
+        $cmds.0.0 ++= [cat $down.file]
+        $cmds.0 ++= [[$decmp]]
+        $cmds.0 ++= [[save $inst.target]]
+        $cmds ++= [[[chmod +x $inst.target]]]
     }
-    {
-        decmp: $decmp
-        workdir: $ctx.workdir?
-        target: $target
-        strip: $ctx.strip?
-        override: $override
-    }
+
+    log level 5 $cmds
 }
