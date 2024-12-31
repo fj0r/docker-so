@@ -2,6 +2,7 @@ use log.nu
 use utils.nu *
 use extractor.nu *
 use downloader.nu *
+use installer.nu *
 
 export def custom_install [
     o
@@ -41,10 +42,13 @@ def run_action [
             } else {
                 get-version $o.version $o.name? --cache=$cache
             }
-
             log level 1 {group: $o.group, version: $version} update version
-            download $o.download $version
-            unpack
+
+            log level 1 $o.download download $version
+            let loc = download $o.download $version
+
+            log level 1 $o.install install $version
+            install $o.install? $loc
         }
         git => {
             run git clone --depth=3 $o.url $o.dist

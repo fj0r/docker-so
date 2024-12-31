@@ -17,6 +17,8 @@ components:
               - index: tag_name
           download:
               url: https://github.com/vi/websocat/releases/download/{{version}}/websocat.x86_64-unknown-linux-musl
+          install:
+              target: /usr/local/bin
     network:
         apt: [lsof, inetutils-ping, iproute2, iptables, net-tools]
     sys:
