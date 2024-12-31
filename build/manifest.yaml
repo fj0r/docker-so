@@ -19,6 +19,7 @@ components:
               url: https://github.com/vi/websocat/releases/download/{{version}}/websocat.x86_64-unknown-linux-musl
           install:
               target: /usr/local/bin
+              rename: websocat
     network:
         apt: [lsof, inetutils-ping, iproute2, iptables, net-tools]
     sys:
@@ -37,6 +38,10 @@ components:
               - index: tag_name
           download:
               url: https://github.com/BurntSushi/ripgrep/releases/latest/download/ripgrep-{{version}}-x86_64-unknown-linux-musl.tar.gz
+          install:
+              target: /usr/local/bin
+              strip: 1
+              filter: '*/rg'
         - name: fd
           version:
               type: github
@@ -46,6 +51,10 @@ components:
               - index: tag_name
           download:
               url: https://github.com/sharkdp/fd/releases/latest/download/fd-{{version}}-x86_64-unknown-linux-musl.tar.gz
+          install:
+              target: /usr/local/bin
+              strip: 1
+              filter: '*/fd'
     disk:
         http:
         - name: dust
@@ -57,6 +66,10 @@ components:
               - index: tag_name
           download:
               url: https://github.com/bootandy/dust/releases/latest/download/dust-{{version}}-x86_64-unknown-linux-musl.tar.gz
+          install:
+              target: /usr/local/bin
+              strip: 1
+              filter: '*/dust'
     compress:
         apt: [xz-utils, zstd, zip, unzip]
     tunnel:
@@ -71,6 +84,9 @@ components:
               - only-nums: null
           download:
               url: https://github.com/erebe/wstunnel/releases/download/v{{version}}/wstunnel_{{version}}_linux_amd64.tar.gz
+          install:
+              target: /usr/local/bin
+              rename: wstunnel
     quickjs:
         http:
         - name: quickjs
@@ -81,6 +97,9 @@ components:
               - regexp: 'href="quickjs-([0-9\-]+).tar.xz"'
           download:
               url: https://bellard.org/quickjs/binary_releases/quickjs-linux-x86_64-{{version}}.zip
+          install:
+              target: /usr/local/bin
+              filter: qjs
     neovim:
         http:
         - name: neovim
@@ -94,6 +113,7 @@ components:
           download:
               url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
               filename: nvim-{{version}}-linux64.tar.gz
+          install:
               strip: 1
               target: /usr/local
 

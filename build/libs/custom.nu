@@ -45,10 +45,11 @@ def run_action [
             log level 1 {group: $o.group, version: $version} update version
 
             log level 1 $o.download download $version
-            let loc = download $o.download $version
+            let dl = download_info $o.download $version
+            download $dl
 
             log level 1 $o.install install $version
-            install $o.install? $loc
+            install $o.install $dl
         }
         git => {
             run git clone --depth=3 $o.url $o.dist
