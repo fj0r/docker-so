@@ -12,4 +12,4 @@ ENV git_pull=
 
 ENTRYPOINT [ "/entrypoint/init.sh" ]
 
-RUN nu /opt/build/main.nu base --proxy=http://172.178.1.111:7890
+RUN nu /opt/build/main.nu base --cache --proxy=http://172.178.1.111:7890

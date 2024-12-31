@@ -4,10 +4,10 @@ export def build [
     conf: record
     target: list<string>
     --proxy: string
-    --sys: string
+    --os: string
     --dry-run
+    --cache
     --versions: record
-    --save-versions
 ] {
     if ($proxy | is-not-empty) {
         log level 1 use proxy $proxy
@@ -22,7 +22,7 @@ export def build [
         }
     }
     | resolve-components $conf.components
-    | install-components --dry-run=$dry_run --sys $sys --versions $versions --save-versions=$save_versions
+    | install-components --cache=$cache --dry-run=$dry_run --os $os --versions $versions
 }
 
 def enrich [o name]  {
@@ -63,20 +63,20 @@ def resolve-components [conf] {
 }
 
 def install-components [
+    --cache
     --dry-run
-    --sys:string
+    --os:string
     --versions: record
-    --save-versions
 ] {
     let o = $in
     let pkg = $o.pkg
     let build_deps = $o.build_deps
     use custom.nu *
 
-    let sys = if ($sys | is-empty) {
+    let os = if ($os | is-empty) {
         (sys host).name
     } else {
-        $sys
+        $os
     }
 
     if $dry_run {
@@ -84,12 +84,13 @@ def install-components [
         $env.dry_run = true
     }
 
-    match $sys {
+    match $os {
         'Debian GNU/Linux' | 'Ubuntu' => {
             use apt.nu *
             apt_update
             apt_install $pkg.apt $build_deps.apt
-            custom_install $o -v $versions --save-versions=$save_versions
+            custom_install $o -v $versions --cache=$cache
+            if not $cache { custom_clean }
             apt_uninstall $pkg.apt $build_deps.apt
             apt_clean
         }
@@ -97,19 +98,21 @@ def install-components [
             use apk.nu *
             apk_update
             apk_install $pkg.apk $build_deps.apk
-            custom_install $o -v $versions --save-versions=$save_versions
+            custom_install $o -v $versions --cache=$cache
+            if not $cache { custom_clean }
             apk_uninstall $pkg.apk $build_deps.apk
         }
         'Arch Linux' => {
             use pacman.nu *
             pacman_update
             pacman_install $pkg.pacman $build_deps.pacman
-            custom_install $o -v $versions --save-versions=$save_versions
+            custom_install $o -v $versions --cache=$cache
+            if not $cache { custom_clean }
             pacman_uninstall $pkg.pacman $build_deps.pacman
             pacman_clean
         }
         _ => {
-            log level 5 $"Not supported on ($sys)"
+            log level 5 $"Not supported on ($os)"
         }
     }
 }

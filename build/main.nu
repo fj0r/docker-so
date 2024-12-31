@@ -2,13 +2,13 @@ use libs *
 
 export def main [
     ...target
+    --cache
     --proxy: string
     --dry-run
-    --sys:string
-    --save-versions
+    --os:string
 ] {
     let pwd = $env.FILE_PWD?
     let conf = [$pwd manifest.yaml] | path join | open $in
     let versions = [$pwd versions.yaml] | path join | open $in
-    build $conf $target --proxy $proxy --dry-run=$dry_run --sys $sys --versions $versions --save-versions=$save_versions
+    build $conf $target --proxy $proxy --cache=$cache --dry-run=$dry_run --os $os --versions $versions
 }

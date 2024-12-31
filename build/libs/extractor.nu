@@ -47,7 +47,7 @@ export def extract [input act args?] {
     }
 }
 
-export def get-version [o name --save] {
+export def get-version [o name --cache] {
     mut headers = []
     let url = if $o.type == github {
         $headers ++= [-H 'Accept: application/json']
@@ -63,7 +63,7 @@ export def get-version [o name --save] {
         extract $acc $r.k $r.v
     }
 
-    if $save and ($name | is-not-empty) {
+    if $cache and ($name | is-not-empty) {
         let f = [$env.FILE_PWD versions.yaml] | path join
         open $f | upsert $name $v | collect | save -f $f
     }

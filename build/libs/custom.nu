@@ -6,7 +6,7 @@ use downloader.nu *
 export def custom_install [
     o
     -v: record
-    --save-versions
+    --cache
 ] {
     let pkg = $o.pkg | reject apt? apk? pacman?
     let types = $pkg | columns
@@ -14,22 +14,32 @@ export def custom_install [
         for i in ($pkg | get $t) {
             let j = $i | upsert type $t
             log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
-            run_action $j -v $v --save-versions=$save_versions
+            run_action $j -v $v --cache=$cache
         }
+    }
+}
+
+export def custom_clean [] {
+    let dir = ([$env.FILE_PWD assets] | path join)
+    cd $dir
+    let files = ls | get name
+    log level 4 clean $files
+    if not ($env.dry_run? | default false) {
+        rm -rf ...$files
     }
 }
 
 def run_action [
     o
     -v: record
-    --save-versions
+    --cache
 ] {
     match $o.type {
         http => {
             let version = if (($o.name? | default '') in $v) {
                 $v | get $o.name
             } else {
-                get-version $o.version $o.name? --save=$save_versions
+                get-version $o.version $o.name? --cache=$cache
             }
 
             log level 1 {group: $o.group, version: $version} update version
@@ -47,7 +57,7 @@ def run_action [
         }
         flow => {
             for i in $o.pipeline? {
-                run_action $i -v $v --save-versions=$save_versions
+                run_action $i -v $v --cache=$cache
             }
         }
     }

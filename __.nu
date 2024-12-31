@@ -3,8 +3,8 @@ def list-layers [] {
     | { completions: $in, options: { sort: false } }
 }
 
-export def run [...layer:string@list-layers --save-versions] {
-    nu build/main.nu ...$layer --dry-run --sys Ubuntu $"--save-versions=($save_versions)"
+export def run [...layer:string@list-layers --cache] {
+    nu build/main.nu ...$layer --dry-run --os Ubuntu $"--cache=($cache)"
 }
 
 export def `build builder` [] {
