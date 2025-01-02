@@ -28,19 +28,21 @@ export def install [inst, down, --prefix:string='/usr/local'] {
     }
 
     mut tmp = ''
-    mut cmds = [[[]]]
+    mut cmds = []
     let target = [$prefix $inst.target] | str join
 
     if ($decmp | is-empty) {
         let t = [$target $inst.rename] | path join
-        $cmds.0.0 ++= [mv $down.file $t]
+        $cmds ++= [[[mv $down.file $t]]]
         $cmds ++= [[[chmod +x $t]]]
     } else if ($fmt == 'zip') {
         $tmp = mktemp -t unzip.XXX -d
-        $cmds.0.0 ++= [unzip $down.file]
+        $cmds ++= [[[cd $tmp]]]
+        $cmds ++= [[[unzip $down.file]]]
         $cmds ++= [[[mv $down.file $target]]]
+        $cmds ++= [[[rm -rf $tmp]]]
     } else if ($fmt | str starts-with 'tar') {
-        $cmds.0.0 ++= [cat $down.file]
+        $cmds ++= [[[cat $down.file]]]
         $cmds.0 ++= [[$decmp]]
         $cmds.0.1 ++= [-C $target]
 
@@ -53,11 +55,15 @@ export def install [inst, down, --prefix:string='/usr/local'] {
         }
     } else {
         let t = [$target $inst.rename] | path join
-        $cmds.0.0 ++= [cat $down.file]
+        $cmds ++= [[[cat $down.file]]]
         $cmds.0 ++= [[$decmp]]
         $cmds.0 ++= [[save $t]]
         $cmds ++= [[[chmod +x $t]]]
     }
 
+    run-pipeline $cmds
+}
+
+def run-pipeline [cmds] {
     log level 5 $cmds
 }
