@@ -39,7 +39,9 @@ export def install [inst, down, --prefix:string='/usr/local'] {
         $tmp = mktemp -t unzip.XXX -d
         $cmds ++= [[[cd $tmp]]]
         $cmds ++= [[[unzip $down.file]]]
-        $cmds ++= [[[mv $down.file $target]]]
+        for i in $inst.filter? {
+            $cmds ++= [[[mv $i $target]]]
+        }
         $cmds ++= [[[rm -rf $tmp]]]
     } else if ($fmt | str starts-with 'tar') {
         $cmds ++= [[[cat $down.file]]]

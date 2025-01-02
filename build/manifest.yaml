@@ -42,7 +42,8 @@ components:
           install:
               target: /bin
               strip: 1
-              filter: '*/rg'
+              filter:
+              - '*/rg'
         - name: fd
           version:
               type: github
@@ -55,7 +56,8 @@ components:
           install:
               target: /bin
               strip: 1
-              filter: '*/fd'
+              filter:
+              - '*/fd'
     disk:
         http:
         - name: dust
@@ -70,7 +72,8 @@ components:
           install:
               target: /bin
               strip: 1
-              filter: '*/dust'
+              filter:
+              - '*/dust'
     compress:
         apt: [xz-utils, zstd, zip, unzip]
     tunnel:
@@ -100,7 +103,8 @@ components:
               url: https://bellard.org/quickjs/binary_releases/quickjs-linux-x86_64-{{version}}.zip
           install:
               target: /bin
-              filter: qjs
+              filter:
+              - qjs
     neovim:
         http:
         - name: neovim
