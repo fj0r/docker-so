@@ -31,20 +31,21 @@ export def install [inst, down, --prefix:string='/usr/local'] {
     mut cmds = []
     let target = [$prefix $inst.target] | str join
 
+    let file = [$down.dir $down.file] | path join
     if ($decmp | is-empty) {
         let t = [$target $inst.rename] | path join
-        $cmds ++= [[[mv $down.file $t]]]
+        $cmds ++= [[[mv $file $t]]]
         $cmds ++= [[[chmod +x $t]]]
     } else if ($fmt == 'zip') {
         $tmp = mktemp -t unzip.XXX -d
         $cmds ++= [[[cd $tmp]]]
-        $cmds ++= [[[unzip $down.file]]]
+        $cmds ++= [[[unzip $file]]]
         for i in $inst.filter? {
             $cmds ++= [[[mv $i $target]]]
         }
         $cmds ++= [[[rm -rf $tmp]]]
     } else if ($fmt | str starts-with 'tar') {
-        $cmds ++= [[[cat $down.file]]]
+        $cmds ++= [[[cat $file]]]
         $cmds.0 ++= [[$decmp]]
         $cmds.0.1 ++= [-C $target]
 
@@ -57,7 +58,7 @@ export def install [inst, down, --prefix:string='/usr/local'] {
         }
     } else {
         let t = [$target $inst.rename] | path join
-        $cmds ++= [[[cat $down.file]]]
+        $cmds ++= [[[cat $file]]]
         $cmds.0 ++= [[$decmp]]
         $cmds.0 ++= [[save $t]]
         $cmds ++= [[[chmod +x $t]]]
@@ -67,5 +68,9 @@ export def install [inst, down, --prefix:string='/usr/local'] {
 }
 
 def run-pipeline [cmds] {
-    log level 5 $cmds
+    for c in $cmds {
+        let x =  $c | each {|x| $x | str join ' '} | str join ' | '
+        log level 1 $x
+        nu -c $x
+    }
 }

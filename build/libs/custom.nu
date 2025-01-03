@@ -44,8 +44,8 @@ def run_action [
             }
             log level 1 {group: $o.group, version: $version} update version
 
-            log level 1 $o.download download $version
             let dl = download_info $o.download $version
+            log level 1 {pwd: $env.PWD, ...$dl} download
             download $dl
 
             log level 1 $o.install install $version
