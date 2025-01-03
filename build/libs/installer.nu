@@ -66,7 +66,6 @@ export def install [inst, down, --prefix:string='/usr/local'] {
 
     for c in $cmds {
         let x =  $c | each {|x| $x | str join ' '} | str join ' | '
-        log level 1 $x
         run --as-str $x
     }
 }

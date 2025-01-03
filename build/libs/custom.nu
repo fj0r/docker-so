@@ -52,7 +52,13 @@ def run_action [
             install $o.install $dl
         }
         git => {
-            run git clone --depth=3 $o.url $o.dist
+            let dist = if ($o.dist | str starts-with '/') {
+                $o.dist
+            } else {
+                [$env.HOME $o.dist] | path join
+            }
+            if not ($dist | path exists) { mkdir $dist }
+            run git clone --depth=3 $o.url $dist
         }
         cmd => {
             for c in $o.cmd {

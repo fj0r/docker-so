@@ -130,7 +130,7 @@ components:
         - pipeline:
           - type: git
             url: https://github.com/fj0r/nvim-lua.git
-            dist: ~/.config/nvim
+            dist: /etc/nvim
           - type: cmd
             cmd:
             - nvim --headless "+Lazy! sync" +qa

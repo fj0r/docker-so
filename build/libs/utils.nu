@@ -1,6 +1,7 @@
 export def --wrapped run [...cmds --as-str] {
+    log level 1 ...$cmds
     if ($env.dry_run? | default false) {
-        log level 1 ...$cmds
+        return
     } else if $as_str {
         nu -c $cmds.0
     } else {
