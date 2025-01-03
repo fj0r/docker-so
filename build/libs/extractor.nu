@@ -37,6 +37,9 @@ export def extract [input act args?] {
         only-nums => {
             $input | parse -r '(?P<v>[0-9\.\-]+)' | get 0?.v?
         }
+        lts => {
+            $input | where lts != false | first
+        }
         github => {
             let ex = [
                 {field: 'tag_name'}
@@ -49,7 +52,7 @@ export def extract [input act args?] {
 
 export def get-version [o name --cache] {
     mut headers = []
-    let url = if $o.type == github {
+    let url = if $o.type? == github {
         $headers ++= [-H 'Accept: application/json']
         $"https://api.github.com/repos/($o.repo)/releases/latest"
     } else {

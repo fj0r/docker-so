@@ -73,5 +73,12 @@ def run_action [
                 run_action $i -v $v --cache=$cache
             }
         }
+        npm => {
+            npm install --location=global ...$o.pkgs
+        }
+        pip => {
+            pip3 install --no-cache-dir --break-system-packages ...$o.pkgs
+
+        }
     }
 }
