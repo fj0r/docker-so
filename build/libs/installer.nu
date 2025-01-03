@@ -38,12 +38,12 @@ export def install [inst, down, --prefix:string='/usr/local'] {
         $cmds ++= [[[chmod +x $t]]]
     } else if ($fmt == 'zip') {
         $tmp = mktemp -t unzip.XXX -d
-        $cmds ++= [[[cd $tmp]]]
+        cd $tmp
         $cmds ++= [[[unzip $file]]]
         for i in $inst.filter? {
             $cmds ++= [[[mv $i $target]]]
         }
-        $cmds ++= [[[rm -rf $tmp]]]
+        $cmds ++= [[['cd ; rm -rf' $tmp]]]
     } else if ($fmt | str starts-with 'tar') {
         $cmds ++= [[[cat $file]]]
         $cmds.0 ++= [[$decmp]]
@@ -64,10 +64,6 @@ export def install [inst, down, --prefix:string='/usr/local'] {
         $cmds ++= [[[chmod +x $t]]]
     }
 
-    run-pipeline $cmds
-}
-
-def run-pipeline [cmds] {
     for c in $cmds {
         let x =  $c | each {|x| $x | str join ' '} | str join ' | '
         log level 1 $x
