@@ -34,7 +34,7 @@ export def install [inst, down, --prefix:string='/usr/local'] {
     let file = [$down.dir $down.file] | path join
     if ($decmp | is-empty) {
         let t = [$target $inst.rename] | path join
-        $cmds ++= [[[mv $file $t]]]
+        $cmds ++= [[[cp $file $t]]]
         $cmds ++= [[[chmod +x $t]]]
     } else if ($fmt == 'zip') {
         $tmp = mktemp -t unzip.XXX -d

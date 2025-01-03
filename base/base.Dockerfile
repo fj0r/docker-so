@@ -12,4 +12,4 @@ ENV git_pull=
 
 ENTRYPOINT [ "/entrypoint/init.sh" ]
 
-RUN nu /opt/build/main.nu base
+RUN nu /opt/build/main.nu base neovim-full
