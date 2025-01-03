@@ -134,6 +134,16 @@ components:
           - type: cmd
             cmd:
             - nvim --headless "+Lazy! sync" +qa
+    nushell-config:
+        build-deps: [git]
+        flow:
+        - pipeline:
+          - type: git
+            url: https://github.com/fj0r/nushell.git
+            dist: /etc/nushell
+          - type: cmd
+            cmd:
+            - echo '/usr/local/bin/nu' | save -a /etc/shells
     rust:
         http:
         - name: cargo
@@ -153,6 +163,8 @@ layers:
     - net-utils
     bootstrap:
     - bootstrap
+    nushell-config:
+    - nushell-config
     neovim:
     - neovim
     neovim-config:
