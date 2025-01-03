@@ -56,7 +56,7 @@ def run_action [
         }
         cmd => {
             for c in $o.cmd {
-                run $c
+                run --as-str $c
             }
         }
         shell => {
