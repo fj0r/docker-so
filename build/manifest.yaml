@@ -1,5 +1,7 @@
 prefix: /usr/local
 components:
+    git:
+        apt: [git]
     http-client:
         apt: [curl, ca-certificates]
     net-utils:
@@ -123,6 +125,7 @@ components:
               target: /
 
     neovim-config:
+        build-deps: [git]
         flow:
         - pipeline:
           - type: git

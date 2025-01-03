@@ -55,7 +55,9 @@ def run_action [
             run git clone --depth=3 $o.url $o.dist
         }
         cmd => {
-            run $o.cmd
+            for c in $o.cmd {
+                run $c
+            }
         }
         shell => {
             run print $o.cmd?
