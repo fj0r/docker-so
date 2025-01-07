@@ -57,8 +57,10 @@ def run_action [
             } else {
                 [$env.HOME $o.dist] | path join
             }
-            if not ($dist | path exists) { mkdir $dist }
-            run git clone --depth=3 $o.url $dist
+            run {
+                if not ($dist | path exists) { mkdir $dist }
+                git clone --depth=3 $o.url $dist
+            }
         }
         cmd => {
             for c in $o.cmd {

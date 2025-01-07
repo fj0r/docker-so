@@ -5,7 +5,11 @@ export def --wrapped run [...cmds --as-str] {
     } else if $as_str {
         nu -c $cmds.0
     } else {
-        ^$cmds.0 ...($cmds | range 1..)
+        if ($cmds.0 | describe -d).type == 'closure' {
+            do $cmds.0
+        } else {
+            ^$cmds.0 ...($cmds | range 1..)
+        }
     }
 }
 
