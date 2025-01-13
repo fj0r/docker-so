@@ -81,5 +81,11 @@ def run_action [
         pip => {
             run pip3 install --no-cache-dir --break-system-packages ...$o.pkgs
         }
+        cargo => {
+            run cargo install ...$o.pkgs
+        }
+        stack => {
+            run stack install --local-bin-path=/usr/local/bin --no-interleaved-output ...$o.pkgs
+        }
     }
 }

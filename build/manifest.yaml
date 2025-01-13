@@ -208,7 +208,7 @@ components:
               strip: 1
               filter:
               - '*/sccache'
-    rust:
+    rust-core:
         apt: [pkg-config, libssl-dev, lldb, libxml2, musl, musl-dev, musl-tools]
         deps: [sscache]
         flow:
@@ -220,6 +220,26 @@ components:
             - rustup component add rust-analyzer
             - rustup target add x86_64-unknown-linux-musl
             - rustup target add wasm32-wasip1 wasm32-wasip2 wasm32-unknown-unknown
+    rust:
+        deps: [rust-core]
+        cargo:
+            pkgs:
+            - rust-script
+            - cargo-wasi
+            - cargo-watch
+            - cargo-expand
+            - cargo-eval
+            - cargo-tree
+            - cargo-feature
+            - cargo-prefetch
+            - cargo-generate
+    rust-fe:
+        deps: [rust]
+        cargo:
+            pkgs:
+            #- dioxus-cli
+            - cargo-leptos
+
     bootstrap:
         shell:
         - name: bootstrap
@@ -245,7 +265,7 @@ layers:
     - ls_node
     - python-http
     rust:
-    - rust
+    - rust-fe
     base:
     - http-client
     - net-utils
