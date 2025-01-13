@@ -9,11 +9,14 @@ export def custom_install [
     --cache
 ] {
     let pkg = $o.pkg | reject apt? apk? pacman? deps? build-deps?
-    $pkg | items {|t,o|
-        for i in $o {
-            let j = $i | upsert type $t
-            log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
-            run_action $j -v $v --cache=$cache
+    let order = [http git cmd shell flow rustup pip npm cargo stack]
+    for o in $order {
+        if $o in $pkg {
+            for i in ($pkg | get $o) {
+                let j = $i | upsert type $o
+                log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
+                run_action $j -v $v --cache=$cache
+            }
         }
     }
 }
@@ -75,14 +78,27 @@ def run_action [
                 run_action $i -v $v --cache=$cache
             }
         }
-        npm => {
-            run npm install --location=global ...$o.pkgs
-        }
         pip => {
             run pip3 install --no-cache-dir --break-system-packages ...$o.pkgs
         }
+        npm => {
+            run npm install --location=global ...$o.pkgs
+        }
+        rustup => {
+            if 'component' in $o {
+                run rustup component add ...$o.component
+            }
+            if 'target' in $o {
+                run rustup target add ...$o.target
+            }
+        }
         cargo => {
-            run cargo install ...$o.pkgs
+            if 'pkgs' in $o {
+                run cargo install ...$o.pkgs
+            }
+            if 'prefetch' in $o {
+                run cargo prefetch ...$o.prefetch
+            }
         }
         stack => {
             run stack install --local-bin-path=/usr/local/bin --no-interleaved-output ...$o.pkgs

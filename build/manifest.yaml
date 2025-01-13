@@ -26,6 +26,8 @@ components:
         apt: [lsof, inetutils-ping, iproute2, iptables, net-tools]
     sys:
         apt: [sudo, procps, htop, cron, tzdata]
+    clang:
+        apt: [build-essential binutils]
     security:
         apt: [openssl]
     utils:
@@ -102,6 +104,7 @@ components:
               filter:
               - qjs
     neovim:
+        build-deps: [clang]
         http:
         - name: neovim
           version:
@@ -216,10 +219,14 @@ components:
           - type: cmd
             cmd:
             - curl --retry 3 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain ${RUST_CHANNEL} -y --no-modify-path
-            - rustup component add rust-src clippy rustfmt
-            - rustup component add rust-analyzer
-            - rustup target add x86_64-unknown-linux-musl
-            - rustup target add wasm32-wasip1 wasm32-wasip2 wasm32-unknown-unknown
+        rustup:
+            component:
+            - rust-src
+            - clippy
+            - rustfmt
+            - rust-analyzer
+            target:
+            - x86_64-unknown-linux-musl
     rust:
         deps: [rust-core]
         cargo:
@@ -233,12 +240,114 @@ components:
             - cargo-feature
             - cargo-prefetch
             - cargo-generate
-    rust-fe:
+    rust-wasm:
+        deps: [rust-core]
+        rustup:
+            target:
+            - wasm32-wasip1
+            - wasm32-wasip2
+            - wasm32-unknown-unknown
+        cargo:
+            prefetch:
+            - wasmtime
+            - wasm-bindgen
+            - wasm-bindgen-futures
+            - wasm-logger
+    rust-data:
         deps: [rust]
+        cargo:
+            prefetch:
+            - bitflags
+            - num
+            - fnv
+            - ndarray
+            - polars
+            - rayon
+            - dfdx
+            - linfa
+    rust-web:
+        deps: [rust, rust-wasm]
+        cargo:
+            prefetch:
+            - tokio
+            - async-std
+            - async-graphql
+
+            - warp
+            - async-graphql-warp
+
+            - axum
+            - async-graphql-axum
+
+    rust-dev:
+        deps: [rust, rust-wasm]
+        cargo:
+            prefetch:
+            - clap
+            - config
+            - libc
+            - tempdir
+
+            - url
+            - reqwest
+            - surf
+            - scraper
+            - tera
+
+            - anyhow
+            - thiserror
+            - snafu
+
+            - proc-macro2
+            - syn
+            - quote
+            - macro_rules_attribute
+
+            - nom
+            - linkme
+            - regex
+            - refined_type
+
+            - crossbeam
+            - crb
+
+            - serde
+            - serde_derive
+            - serde_yaml
+            - serde_json
+
+            - serde_cbor
+            - schemars
+
+            - slog
+            - slog-async
+            - slog-json
+            - slog-term
+            - slog-logfmt
+
+            - time
+            - lru-cache
+            - itertools
+
+    rust-fe:
+        deps: [rust-dev]
         cargo:
             pkgs:
             #- dioxus-cli
             - cargo-leptos
+            prefetch:
+            - trunk
+            - wasm-pack
+            - wee_alloc
+            - sycamore
+            - leptos
+            - reqwasm
+
+            # - dioxus
+            # - dioxus-web
+            # - dioxus-liveview
+            # - reqwasm
+
 
     bootstrap:
         shell:
@@ -265,7 +374,10 @@ layers:
     - ls_node
     - python-http
     rust:
+    - rust-dev
     - rust-fe
+    - rust-data
+    - rust-web
     base:
     - http-client
     - net-utils
