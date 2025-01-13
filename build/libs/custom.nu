@@ -47,10 +47,10 @@ def run_action [
 
             for i in $o.install {
                 let dl = download_info $i $version
-                log level 1 {pwd: $env.PWD, ...$dl} download
+                log level 1 {pwd: $env.PWD, url: $dl.url} download
                 download $dl
 
-                log level 1 $i install $version
+                log level 1 ($i | upsert filename $dl.file | reject url?) install $version
                 install $i $dl
             }
         }
