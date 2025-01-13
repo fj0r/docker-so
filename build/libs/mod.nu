@@ -39,16 +39,30 @@ def enrich [o name]  {
     }
 }
 
+def resolve-deps [conf deps -k:string='deps'] {
+    mut deps = $deps
+    for d in $deps {
+        let x = $conf | get $d
+        if $k in $x {
+            let d1 = $x | get $k
+            $deps ++= $d1
+            let d2 = resolve-deps $conf $d1 -k $k
+            $deps ++= $d2
+        }
+    }
+    $deps | uniq
+}
+
 def resolve-components [conf] {
     let r = $in | reduce -f {} {|i,a|
         $a | merge deep --strategy=append (enrich $conf $i)
     }
 
-    let deps = $r.deps? | uniq | reduce -f {} {|y, b|
+    let deps = resolve-deps $conf $r.deps? -k 'deps' | reduce -f {} {|y, b|
         $b | merge deep --strategy=append (enrich $conf $y)
     }
 
-    let build_deps = $r.build-deps? | uniq | reduce -f {} {|y, b|
+    let build_deps = resolve-deps $conf $r.build-deps? -k 'build-deps' | reduce -f {} {|y, b|
         $b | merge deep --strategy=append (enrich $conf $y)
     }
 
