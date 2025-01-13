@@ -19,6 +19,8 @@ export def build [
         if ($t in $conf.layers) {
             let n = $conf.layers | get $t
             $a | append $n | uniq
+        } else {
+            error make {msg: $"layer ($t) not exists" }
         }
     }
     | resolve-components $conf.components

@@ -9,7 +9,7 @@ export def custom_install [
     -v: record
     --cache
 ] {
-    let pkg = $o.pkg | reject apt? apk? pacman?
+    let pkg = $o.pkg | reject apt? apk? pacman? deps? build-deps?
     let types = $pkg | columns
     for t in $types {
         for i in ($pkg | get $t) {
@@ -76,11 +76,10 @@ def run_action [
             }
         }
         npm => {
-            npm install --location=global ...$o.pkgs
+            run npm install --location=global ...$o.pkgs
         }
         pip => {
-            pip3 install --no-cache-dir --break-system-packages ...$o.pkgs
-
+            run pip3 install --no-cache-dir --break-system-packages ...$o.pkgs
         }
     }
 }
