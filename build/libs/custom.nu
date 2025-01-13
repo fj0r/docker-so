@@ -1,7 +1,6 @@
 use log.nu
 use utils.nu *
 use extractor.nu *
-use downloader.nu *
 use installer.nu *
 
 export def custom_install [
@@ -10,9 +9,8 @@ export def custom_install [
     --cache
 ] {
     let pkg = $o.pkg | reject apt? apk? pacman? deps? build-deps?
-    let types = $pkg | columns
-    for t in $types {
-        for i in ($pkg | get $t) {
+    $pkg | items {|t,o|
+        for i in $o {
             let j = $i | upsert type $t
             log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
             run_action $j -v $v --cache=$cache
@@ -44,12 +42,14 @@ def run_action [
             }
             log level 1 {group: $o.group, version: $version} update version
 
-            let dl = download_info $o.download $version
-            log level 1 {pwd: $env.PWD, ...$dl} download
-            download $dl
+            for i in $o.install {
+                let dl = download_info $i $version
+                log level 1 {pwd: $env.PWD, ...$dl} download
+                download $dl
 
-            log level 1 $o.install install $version
-            install $o.install $dl
+                log level 1 $i install $version
+                install $i $dl
+            }
         }
         git => {
             let dist = if ($o.dist | str starts-with '/') {
