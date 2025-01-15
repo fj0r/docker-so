@@ -6,14 +6,14 @@ export def download [o] {
     run curl -sSL $o.url -o $o.file
 }
 
-export def download_info [o, version] {
-    let url = $o.url | str replace -a '{{version}}' $version
+export def download_info [o, vars] {
+    let url = $o.url | render $vars
     let file = if ($o.filename? | is-empty) {
         $url | path basename
     } else {
-        $o.filename | str replace -a '{{version}}' $version
+        $o.filename | render $vars
     }
-    let dir = ([$env.FILE_PWD assets] | path join)
+    let dir = [$env.FILE_PWD assets] | path join | render $vars
     {
         dir: $dir
         file: $file

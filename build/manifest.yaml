@@ -219,7 +219,7 @@ components:
               - name: ghc
                 install:
                 - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
-                  target: ${GHCUP_ROOT}/bin/ghcup
+                  target: '{{GHCUP_ROOT}}/bin/ghcup'
 
     rust-core:
         apt: [pkg-config, libssl-dev, lldb, libxml2, musl, musl-dev, musl-tools]
@@ -228,7 +228,7 @@ components:
         - pipeline:
           - cmd:
                 cmd:
-                - curl --retry 3 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain ${RUST_CHANNEL} -y --no-modify-path
+                - curl --retry 3 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain {{RUST_CHANNEL}} -y --no-modify-path
         rustup:
             component:
             - rust-src

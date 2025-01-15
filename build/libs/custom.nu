@@ -46,7 +46,7 @@ def run_action [
             log level 1 {group: $o.group, version: $version} update version
 
             for i in $o.install {
-                let dl = download_info $i $version
+                let dl = download_info $i {version: $version, ...$env}
                 log level 1 {pwd: $env.PWD, url: $dl.url} download
                 download $dl
 
@@ -67,11 +67,11 @@ def run_action [
         }
         cmd => {
             for c in $o.cmd {
-                run --as-str $c
+                run --as-str ($c | render $env)
             }
         }
         shell => {
-            run print $o.cmd?
+            run print ($o.cmd? | render $env)
         }
         flow => {
             for i in $o.pipeline? {
