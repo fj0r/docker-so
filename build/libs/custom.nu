@@ -40,7 +40,7 @@ def run_action [
         http => {
             let version = if (($o.name? | default '') in $v) {
                 $v | get $o.name
-            } else {
+            } else if 'version' in $o {
                 get-version $o.version $o.name? --cache=$cache
             }
             log level 1 {group: $o.group, version: $version} update version
@@ -75,7 +75,7 @@ def run_action [
         }
         flow => {
             for i in $o.pipeline? {
-                run_action $i -v $v --cache=$cache
+                custom_install {pkg: $i} -v $v --cache=$cache
             }
         }
         pip => {

@@ -27,7 +27,7 @@ components:
     sys:
         apt: [sudo, procps, htop, cron, tzdata]
     clang:
-        apt: [build-essential binutils]
+        apt: [build-essential, binutils]
     security:
         apt: [openssl]
     utils:
@@ -124,22 +124,22 @@ components:
         deps: [git]
         flow:
         - pipeline:
-          - type: git
-            url: https://github.com/fj0r/nvim-lua.git
-            dist: /etc/nvim
-          - type: cmd
-            cmd:
-            - nvim --headless "+Lazy! sync" +qa
+          - git:
+                url: https://github.com/fj0r/nvim-lua.git
+                dist: /etc/nvim
+          - cmd:
+                cmd:
+                - nvim --headless "+Lazy! sync" +qa
     nushell-config:
         deps: [git]
         flow:
         - pipeline:
-          - type: git
-            url: https://github.com/fj0r/nushell.git
-            dist: /etc/nushell
-          - type: cmd
-            cmd:
-            - echo '/usr/local/bin/nu' | save -a /etc/shells
+          - git:
+                url: https://github.com/fj0r/nushell.git
+                dist: /etc/nushell
+          - cmd:
+                cmd:
+                - echo '/usr/local/bin/nu' | save -a /etc/shells
     python:
         apt: [python3, python3-pip]
     nodejs:
@@ -211,14 +211,24 @@ components:
               strip: 1
               filter:
               - '*/sccache'
+    ghc-core:
+        apt: [libicu-dev, libffi-dev, libgmp-dev, zlib1g-dev, libncurses-dev, libtinfo-dev, libblas-dev, liblapack-dev]
+        flow:
+        - pipeline:
+            - http:
+              - name: ghc
+                install:
+                - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
+                  target: ${GHCUP_ROOT}/bin/ghcup
+
     rust-core:
         apt: [pkg-config, libssl-dev, lldb, libxml2, musl, musl-dev, musl-tools]
         deps: [sscache]
         flow:
         - pipeline:
-          - type: cmd
-            cmd:
-            - curl --retry 3 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain ${RUST_CHANNEL} -y --no-modify-path
+          - cmd:
+                cmd:
+                - curl --retry 3 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain ${RUST_CHANNEL} -y --no-modify-path
         rustup:
             component:
             - rust-src
@@ -378,6 +388,8 @@ layers:
     - rust-fe
     - rust-data
     - rust-web
+    haskell:
+    - ghc-core
     base:
     - http-client
     - net-utils
