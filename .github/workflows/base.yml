@@ -82,3 +82,14 @@ jobs:
           build-args: |
             message=${{ github.event.head_commit.message }}
 
+      - name: Build rust
+        uses: docker/build-push-action@v4
+        with:
+          context: base
+          file: base/rust.Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:rust
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            message=${{ github.event.head_commit.message }}
+

@@ -99,6 +99,10 @@ def run_action [
             if 'prefetch' in $o {
                 run cargo prefetch ...$o.prefetch
             }
+            if 'CARGO_HOME' in $env {
+                let p = [$env.CARGO_HOME registry src *] | path join | into glob
+                rm -vrf $p
+            }
         }
         stack => {
             run stack install --local-bin-path=/usr/local/bin --no-interleaved-output ...$o.pkgs
