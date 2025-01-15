@@ -17,7 +17,7 @@ export def --wrapped run [...cmds --as-str] {
 export def render [vars: record] {
     let tmpl = $in
     let v = $tmpl
-    | parse -r '{{(?<v>.*?)}}'
+    | parse -r '(?<!{){{(?<v>[^{}]*?)}}(?!})'
     | get v
     | uniq
 
