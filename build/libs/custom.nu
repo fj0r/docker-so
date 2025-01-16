@@ -9,8 +9,8 @@ export def custom_install [
     --cache
 ] {
     let pkg = $o | reject apt? apk? pacman? deps? build-deps?
-    let order = [http git cmd shell flow rustup pip npm cargo stack]
-    for o in $order {
+    let global_order = [http git cmd shell flow rustup pip npm cargo stack]
+    for o in $global_order {
         if $o in $pkg {
             for i in ($pkg | get $o) {
                 let j = $i | upsert type $o
@@ -75,7 +75,10 @@ def run_action [
         }
         flow => {
             for i in $o.pipeline? {
-                custom_install $i -v $v --cache=$cache
+                let j = $i
+                | items {|k, v| [$k, ($v | upsert group $o.group)] }
+                | reduce -f {} {|i, a| $a | insert $i.0 $i.1}
+                custom_install $j -v $v --cache=$cache
             }
         }
         pip => {
