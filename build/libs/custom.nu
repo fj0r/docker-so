@@ -58,6 +58,7 @@ def run_action [
             } else {
                 [$env.HOME $o.dist] | path join
             }
+            log level 1 {dist: $dist}
             run {
                 if not ($dist | path exists) { mkdir $dist }
                 git clone --depth=3 $o.url $dist
@@ -98,6 +99,19 @@ def run_action [
             if 'component' in $o {
                 run ghcup install ...$o.component
             }
+
+            let ver = $env.MESSAGE?
+            | default ''
+            | parse -r '\+ghc_ver=(?<v>[0-9\.]+)'
+            | get -i v.0
+            let ver = if ($ver | is-empty) {
+                http get -H [Accept application/json] $env.STACK_INFO_URL
+                | get snapshot.ghc
+            } else {
+                $ver
+            }
+
+            run ghcup -s '["GHCupURL", "StackSetupURL"]' install ghc $ver
         }
         cargo => {
             if 'pkgs' in $o {
@@ -112,11 +126,21 @@ def run_action [
             }
         }
         stack => {
-            if 'config' in $o {
-                for i in ($o.config | transpose k v) {
+            if 'global_config' in $o {
+                for i in ($o.global_config | transpose k v) {
                     run stack config set $i.k --global $i.v
                 }
             }
+            if 'config' in $o {
+                let conf = $"($env.STACK_ROOT)/config.yaml"
+                log level 1 {conf: $conf}
+                run {
+                    open $conf
+                    | merge $o.config
+                    | collect { $in | save -f $conf }
+                }
+            }
+
             if 'pkgs' in $o {
                 run stack install --local-bin-path=/usr/local/bin --no-interleaved-output ...$o.pkgs
             }
