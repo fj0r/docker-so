@@ -8,7 +8,7 @@ export def custom_install [
     -v: record
     --cache
 ] {
-    let pkg = $o.pkg | reject apt? apk? pacman? deps? build-deps?
+    let pkg = $o | reject apt? apk? pacman? deps? build-deps?
     let order = [http git cmd shell flow rustup pip npm cargo stack]
     for o in $order {
         if $o in $pkg {
@@ -75,7 +75,7 @@ def run_action [
         }
         flow => {
             for i in $o.pipeline? {
-                custom_install {pkg: $i} -v $v --cache=$cache
+                custom_install $i -v $v --cache=$cache
             }
         }
         pip => {
@@ -101,7 +101,7 @@ def run_action [
             }
             if 'CARGO_HOME' in $env {
                 let p = [$env.CARGO_HOME registry src *] | path join | into glob
-                run rm -vrf $p
+                run rm -rf $p
             }
         }
         stack => {

@@ -75,7 +75,7 @@ def resolve-components [conf] {
     | reduce -f {} {|i,a| $a | insert $i [] }
     | merge deep --strategy=append $build_deps
 
-    {pkg: $r, build_deps: $b}
+    $r | merge deep --strategy=append {build_deps: $b}
 }
 
 def install-components [
@@ -84,9 +84,8 @@ def install-components [
     --os:string
     --versions: record
 ] {
-    let o = $in
-    let pkg = $o.pkg
-    let build_deps = $o.build_deps
+    let pkg = $in
+    let build_deps = $pkg.build_deps
     use custom.nu *
 
     let os = if ($os | is-empty) {
@@ -105,7 +104,7 @@ def install-components [
             use apt.nu *
             apt_update
             apt_install $pkg.apt $build_deps.apt
-            custom_install $o -v $versions --cache=$cache
+            custom_install $pkg -v $versions --cache=$cache
             if not $cache { custom_clean }
             apt_uninstall $pkg.apt $build_deps.apt
             apt_clean
@@ -114,7 +113,7 @@ def install-components [
             use apk.nu *
             apk_update
             apk_install $pkg.apk $build_deps.apk
-            custom_install $o -v $versions --cache=$cache
+            custom_install $pkg -v $versions --cache=$cache
             if not $cache { custom_clean }
             apk_uninstall $pkg.apk $build_deps.apk
         }
@@ -122,7 +121,7 @@ def install-components [
             use pacman.nu *
             pacman_update
             pacman_install $pkg.pacman $build_deps.pacman
-            custom_install $o -v $versions --cache=$cache
+            custom_install $pkg -v $versions --cache=$cache
             if not $cache { custom_clean }
             pacman_uninstall $pkg.pacman $build_deps.pacman
             pacman_clean
