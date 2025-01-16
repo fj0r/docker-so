@@ -101,7 +101,7 @@ def run_action [
             }
             if 'CARGO_HOME' in $env {
                 let p = [$env.CARGO_HOME registry src *] | path join | into glob
-                rm -vrf $p
+                run rm -vrf $p
             }
         }
         stack => {

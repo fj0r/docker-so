@@ -26,3 +26,10 @@ export def `build base` [] {
         base
     )
 }
+
+
+export def git-hooks [act ctx] {
+    if $act == 'prepare-commit-msg' {
+        {} | to yaml | save -f build/versions.yaml
+    }
+}
