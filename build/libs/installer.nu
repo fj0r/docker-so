@@ -27,7 +27,7 @@ export def install [inst, down, --prefix:string='/usr/local'] {
     } else {
         let fn = $down.file | split row '.'
         let zf = $fn | last
-        if ($fn | range (-2..-2) | get 0) == 'tar' {
+        if ($fn | length) >= 2 and ($fn | range (-2..-2) | get 0) == 'tar' {
             $"tar.($zf)"
         } else {
             $zf
@@ -49,11 +49,17 @@ export def install [inst, down, --prefix:string='/usr/local'] {
 
     mut tmp = ''
     mut cmds = []
-    let target = [$prefix $inst.target] | str join
+    let target = if ($inst.root? | default false) {
+        $inst.target
+    } else {
+        [$prefix $inst.target] | str join
+    }
+    | render $env
 
     let file = [$down.dir $down.file] | path join
     if ($decmp | is-empty) {
-        let t = [$target $inst.rename] | path join
+        let r = $inst.rename? | default $target
+        let t = [$target $r] | path join
         $cmds ++= [[[cp $file $t]]]
         $cmds ++= [[[chmod +x $t]]]
     } else if ($fmt == 'zip') {

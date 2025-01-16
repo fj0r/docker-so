@@ -19,7 +19,7 @@ export def build [
     if ($custom_list | is-not-empty) {
         $env.custom_list = $custom_list
     } else {
-        $env.custom_list = [http git cmd shell flow rustup pip npm cargo stack]
+        $env.custom_list = [http git cmd shell flow pip npm rustup cargo ghcup stack]
     }
 
     $target

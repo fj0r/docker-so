@@ -94,6 +94,11 @@ def run_action [
                 run rustup target add ...$o.target
             }
         }
+        ghcup => {
+            if 'component' in $o {
+                run ghcup install ...$o.component
+            }
+        }
         cargo => {
             if 'pkgs' in $o {
                 run cargo install ...$o.pkgs
@@ -107,7 +112,14 @@ def run_action [
             }
         }
         stack => {
-            run stack install --local-bin-path=/usr/local/bin --no-interleaved-output ...$o.pkgs
+            if 'config' in $o {
+                for i in ($o.config | transpose k v) {
+                    run stack config set $i.k --global $i.v
+                }
+            }
+            if 'pkgs' in $o {
+                run stack install --local-bin-path=/usr/local/bin --no-interleaved-output ...$o.pkgs
+            }
         }
     }
 }

@@ -220,7 +220,15 @@ components:
                 install:
                 - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
                   target: '{{GHCUP_ROOT}}/bin/ghcup'
-
+                  root: true
+        ghcup:
+            component:
+            - stack
+            - cabal
+        stack:
+            config:
+                system-ghc: true
+                install-ghc: false
     rust-core:
         apt: [pkg-config, libssl-dev, lldb, libxml2, musl, musl-dev, musl-tools]
         deps: [sscache]
