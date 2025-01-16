@@ -83,6 +83,7 @@ def run_action [
         }
         npm => {
             run npm install --location=global ...$o.pkgs
+            run npm cache clean --force
         }
         rustup => {
             if 'component' in $o {
