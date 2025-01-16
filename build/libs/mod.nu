@@ -8,12 +8,20 @@ export def build [
     --dry-run
     --cache
     --versions: record
+    --custom-list: list<string>
 ] {
     if ($proxy | is-not-empty) {
         log level 1 use proxy $proxy
         $env.http_proxy = $proxy
         $env.https_proxy = $proxy
     }
+
+    if ($custom_list | is-not-empty) {
+        $env.custom_list = $custom_list
+    } else {
+        $env.custom_list = [http git cmd shell flow rustup pip npm cargo stack]
+    }
+
     $target
     | reduce -f [] {|t,a|
         if ($t in $conf.layers) {
@@ -31,10 +39,10 @@ def enrich [o name]  {
     let x = $o | get $name
     let ks = $x | columns
     $ks | reduce -f $x {|i,a|
-        if $i in [deps build-deps apt apk pacman] {
-            $a
-        } else {
+        if $i in $env.custom_list {
             $a | update $i ($a | get $i | upsert group [$name])
+        } else {
+            $a
         }
     }
 }

@@ -4,13 +4,11 @@ use extractor.nu *
 use installer.nu *
 
 export def custom_install [
-    o
+    pkg
     -v: record
     --cache
 ] {
-    let pkg = $o | reject apt? apk? pacman? deps? build-deps?
-    let global_order = [http git cmd shell flow rustup pip npm cargo stack]
-    for o in $global_order {
+    for o in $env.custom_list {
         if $o in $pkg {
             for i in ($pkg | get $o) {
                 let j = $i | upsert type $o

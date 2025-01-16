@@ -6,9 +6,10 @@ export def main [
     --proxy: string
     --dry-run
     --os:string
+    --custom-list: list<string>
 ] {
     let pwd = $env.FILE_PWD?
     let conf = [$pwd manifest.yaml] | path join | open $in
     let versions = [$pwd versions.yaml] | path join | open $in
-    build $conf $target --proxy $proxy --cache=$cache --dry-run=$dry_run --os $os --versions $versions
+    build $conf $target --proxy $proxy --cache=$cache --dry-run=$dry_run --os $os --versions $versions --custom-list $custom_list
 }
