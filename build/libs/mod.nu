@@ -31,10 +31,10 @@ def enrich [o name]  {
     let x = $o | get $name
     let ks = $x | columns
     $ks | reduce -f $x {|i,a|
-        if ($a | get $i | describe | str starts-with 'table<') {
-            $a | update $i ($a | get $i | upsert group $name)
-        } else {
+        if $i in [deps build-deps apt apk pacman] {
             $a
+        } else {
+            $a | update $i ($a | get $i | upsert group [$name])
         }
     }
 }
