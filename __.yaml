@@ -1,0 +1,4 @@
+GHCUP_ROOT: /opt/.ghcup
+STACK_ROOT: /opt/stack
+RUST_CHANNEL: stable
+CARGO_HOOME: /opt/cargo

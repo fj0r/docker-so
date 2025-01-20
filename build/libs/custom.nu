@@ -100,18 +100,7 @@ def run_action [
                 run ghcup install ...$o.component
             }
 
-            let ver = $env.MESSAGE?
-            | default ''
-            | parse -r '\+ghc_ver=(?<v>[0-9\.]+)'
-            | get -i v.0
-            let ver = if ($ver | is-empty) {
-                http get -H [Accept application/json] $env.STACK_INFO_URL
-                | get snapshot.ghc
-            } else {
-                $ver
-            }
-
-            run ghcup -s '["GHCupURL", "StackSetupURL"]' install ghc $ver
+            run ghcup -s '["GHCupURL", "StackSetupURL"]' install ghc ($v | get $o.version_index)
         }
         cargo => {
             if 'pkgs' in $o {

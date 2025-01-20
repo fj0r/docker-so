@@ -213,15 +213,22 @@ components:
               - '*/sccache'
     ghc-core:
         apt: [libicu-dev, libffi-dev, libgmp-dev, zlib1g-dev, libncurses-dev, libtinfo-dev, libblas-dev, liblapack-dev]
-        flow:
-        - pipeline:
-            - http:
-              - name: ghc
-                install:
-                - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
-                  target: '{{GHCUP_ROOT}}/bin/ghcup'
-                  root: true
+        http:
+          - name: ghc
+            version:
+              type: html
+              url: https://www.stackage.org/lts
+              headers:
+                Accept: application/json
+              extract:
+              - from-json: null
+              - index: snapshot.ghc
+            install:
+            - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
+              target: '{{GHCUP_ROOT}}/bin/ghcup'
+              root: true
         ghcup:
+            version_index: ghc
             component:
             - stack
             - cabal

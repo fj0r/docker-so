@@ -59,6 +59,12 @@ export def get-version [o name --cache] {
         $o.url
     }
 
+    if ($o.headers? | is-not-empty) {
+        for h in ($o.headers | transpose k v) {
+            $headers ++= [-H $"($h.k): ($h.v)"]
+        }
+    }
+
     let r = curl -sSL ...$headers $url
 
     let v = $o.extract? | reduce -f $r {|x, acc|
