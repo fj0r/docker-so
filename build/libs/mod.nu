@@ -7,7 +7,6 @@ export def build [
     --os: string
     --dry-run
     --cache
-    --versions: record
     --custom-list: list<string>
 ] {
     if ($proxy | is-not-empty) {
@@ -32,7 +31,7 @@ export def build [
         }
     }
     | resolve-components $conf.components
-    | install-components --cache=$cache --dry-run=$dry_run --os $os --versions $versions
+    | install-components --cache=$cache --dry-run=$dry_run --os $os
 }
 
 def enrich [o name]  {
@@ -90,7 +89,6 @@ def install-components [
     --cache
     --dry-run
     --os:string
-    --versions: record
 ] {
     let pkg = $in
     let build_deps = $pkg.build_deps
@@ -112,7 +110,7 @@ def install-components [
             use apt.nu *
             apt_update
             apt_install $pkg.apt $build_deps.apt
-            custom_install $pkg -v $versions --cache=$cache
+            custom_install $pkg --cache=$cache
             if not $cache { custom_clean }
             apt_uninstall $pkg.apt $build_deps.apt
             apt_clean
@@ -121,7 +119,7 @@ def install-components [
             use apk.nu *
             apk_update
             apk_install $pkg.apk $build_deps.apk
-            custom_install $pkg -v $versions --cache=$cache
+            custom_install $pkg --cache=$cache
             if not $cache { custom_clean }
             apk_uninstall $pkg.apk $build_deps.apk
         }
@@ -129,7 +127,7 @@ def install-components [
             use pacman.nu *
             pacman_update
             pacman_install $pkg.pacman $build_deps.pacman
-            custom_install $pkg -v $versions --cache=$cache
+            custom_install $pkg --cache=$cache
             if not $cache { custom_clean }
             pacman_uninstall $pkg.pacman $build_deps.pacman
             pacman_clean

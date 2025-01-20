@@ -48,3 +48,14 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Build haskell
+        uses: docker/build-push-action@v4
+        with:
+          context: ext/haskell
+          file: ext/haskell/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:haskell
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            message=${{ github.event.head_commit.message }}
+

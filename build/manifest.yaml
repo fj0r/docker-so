@@ -211,35 +211,6 @@ components:
               strip: 1
               filter:
               - '*/sccache'
-    ghc-core:
-        apt: [libicu-dev, libffi-dev, libgmp-dev, zlib1g-dev, libncurses-dev, libtinfo-dev, libblas-dev, liblapack-dev]
-        http:
-          - name: ghc
-            version:
-              type: html
-              url: https://www.stackage.org/lts
-              headers:
-                Accept: application/json
-              extract:
-              - from-json: null
-              - index: snapshot.ghc
-            install:
-            - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
-              target: '{{GHCUP_ROOT}}/bin/ghcup'
-              root: true
-        ghcup:
-            version_index: ghc
-            component:
-            - stack
-            - cabal
-        stack:
-            global_config:
-                system-ghc: true
-                install-ghc: false
-            config:
-                allow-different-user: true
-                allow-newer: true
-                recommend-stack-upgrade: false
     rust-core:
         apt: [pkg-config, libssl-dev, lldb, libxml2, musl, musl-dev, musl-tools]
         deps: [sscache]
@@ -363,7 +334,8 @@ components:
         cargo:
             pkgs:
             #- dioxus-cli
-            - cargo-leptos
+            # TODO: 
+            #- cargo-leptos
             prefetch:
             - trunk
             - wasm-pack
@@ -377,6 +349,111 @@ components:
             # - dioxus-liveview
             # - reqwasm
 
+    ghc-core:
+        apt: [libicu-dev, libffi-dev, libgmp-dev, zlib1g-dev, libncurses-dev, libtinfo-dev, libblas-dev, liblapack-dev]
+        http:
+          - name: ghc
+            version:
+              type: html
+              url: https://www.stackage.org/lts
+              headers:
+                Accept: application/json
+              extract:
+              - from-json: null
+              - index: snapshot.ghc
+            install:
+            - url: https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup
+              target: '{{GHCUP_ROOT}}/bin/ghcup'
+              root: true
+        ghcup:
+            version_index: ghc
+            component:
+            - stack
+            - cabal
+        stack:
+            global_config:
+                system-ghc: true
+                install-ghc: false
+            config:
+                allow-different-user: true
+                allow-newer: true
+                recommend-stack-upgrade: false
+            pkgs:
+            - deepseq
+            - primitive
+            - ghc-prim
+            - template-haskell
+            - aeson
+            - yaml
+
+            - classy-prelude
+            - base
+            - binary
+            - bytestring
+            - text
+
+            - containers
+            - unordered-containers
+            - vector
+            - transformers
+
+            - process
+            - network
+
+            - monad-par
+            - parallel
+            - async
+            - stm
+            - regex-base
+            - regex-posix
+            - regex-compat
+
+            - time
+            - directory
+            - filepath
+            - shelly
+            - unix
+    ghc-dev:
+        stack:
+            pkgs:
+            - ghcid
+            - implicit-hie
+            - haskell-dap
+            - ghci-dap
+            - haskell-debug-adapter
+            - call-stack
+    ghc-web:
+        stack:
+            pkgs:
+            - req
+            - websockets
+            - servant
+            - wai
+            - warp
+            - network-uri
+    ghc-ext:
+        stack:
+            pkgs:
+            - lens
+            - recursion-schemes
+            - free
+            - extensible-effects
+            - extensible-exceptions
+            - megaparsec
+            - Earley
+            - singletons
+            - pipes
+            - conduit
+            - machines
+            - hmatrix
+            - linear
+    ghc-test:
+        stack:
+            pkgs:
+            - QuickCheck
+            - falsify
+            - hspec
+
 
     bootstrap:
         shell:
@@ -386,8 +463,18 @@ components:
 
 
 layers:
-    test-deps:
+    base:
+    - http-client
     - net-utils
+    - websocket
+    - network
+    - sys
+    - security
+    - utils
+    - disk
+    - compress
+    - tunnel
+    - quickjs
     bootstrap:
     - bootstrap
     nushell-config:
@@ -407,18 +494,16 @@ layers:
     - rust-fe
     - rust-data
     - rust-web
+    test-deps:
+    - net-utils
     haskell:
     - ghc-core
-    base:
-    - http-client
-    - net-utils
-    - websocket
-    - network
-    - sys
-    - security
-    - utils
-    - disk
-    - compress
-    - tunnel
-    - quickjs
+    - ghc-dev
+    - ghc-test
+    haskell-full:
+    - ghc-core
+    - ghc-dev
+    - ghc-test
+    - ghc-web
+    - ghc-ext
 

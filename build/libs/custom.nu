@@ -5,7 +5,6 @@ use installer.nu *
 
 export def custom_install [
     pkg
-    -v: record
     --cache
 ] {
     for o in $env.custom_list {
@@ -13,6 +12,7 @@ export def custom_install [
             for i in ($pkg | get $o) {
                 let j = $i | upsert type $o
                 log level 3 {type: $j.type, group: $j.group?, name: $j.name?}
+                let v = [$env.FILE_PWD versions.yaml] | path join | open $in
                 run_action $j -v $v --cache=$cache
             }
         }
@@ -77,7 +77,7 @@ def run_action [
                 let j = $i
                 | items {|k, v| [$k, ($v | upsert group $o.group)] }
                 | reduce -f {} {|i, a| $a | insert $i.0 $i.1}
-                custom_install $j -v $v --cache=$cache
+                custom_install $j --cache=$cache
             }
         }
         pip => {
