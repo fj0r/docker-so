@@ -191,6 +191,11 @@ components:
             - aiostream
             - fastapi
             - uvicorn
+    python-data:
+        deps: [python, python-dev]
+        conda:
+            pkgs:
+            - torch
     sscache:
         http:
         - name: sscache

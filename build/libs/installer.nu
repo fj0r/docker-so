@@ -56,6 +56,13 @@ export def install [inst, down, --prefix:string='/usr/local'] {
     }
     | render $env
 
+    let target_parent = $target | path dirname
+    if ($target_parent | path exists) {
+        log level 1 $target_parent exists
+    } else {
+        run mkdir $target_parent
+    }
+
     let file = [$down.dir $down.file] | path join
     if ($decmp | is-empty) {
         let r = $inst.rename? | default $target
