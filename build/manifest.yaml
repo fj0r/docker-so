@@ -112,10 +112,9 @@ components:
               repo: 'neovim/neovim'
               extract:
               - from-json: null
-              - index: name
-              - only-nums: null
+              - index: tag_name
           install:
-            - url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+            - url: https://github.com/neovim/neovim/releases/download/{{version}}/nvim-linux-x86_64.tar.gz
               filename: nvim-{{version}}-linux64.tar.gz
               strip: 1
               target: /
