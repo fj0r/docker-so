@@ -179,8 +179,6 @@ components:
             - boltons
             - decorator
             - deepmerge
-            - structlog
-            - python-json-logger
     python-http:
         deps: [python, python-dev]
         pip:
