@@ -9,7 +9,7 @@ export def run [...layer:string@list-layers --cache] {
 
 export def `build builder` [] {
     (
-        ^$env.CONTCTL build
+        ^$env.CNTRCTL build
         -f base/builder.Dockerfile
         -t so:builder
         .
@@ -19,7 +19,7 @@ export def `build builder` [] {
 export def `build base` [] {
     build builder
     (
-        ^$env.CONTCTL build
+        ^$env.CNTRCTL build
         -f base/base-proxy.Dockerfile
         -t so:base
         --build-arg BASEIMAGE=so:builder

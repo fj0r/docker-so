@@ -178,7 +178,6 @@ components:
             - pyyaml
             - boltons
             - decorator
-            - deepmerge
     python-http:
         deps: [python, python-dev]
         pip:
