@@ -19,7 +19,9 @@ RUN set -eux \
   ; dropbear_url=$(curl --retry 3 -sSL https://api.github.com/repos/mkj/dropbear/releases -H 'Accept: application/vnd.github.v3+json' | jq -r '.[0].tarball_url') \
   ; curl --retry 3 -sSL ${dropbear_url} | tar zxf - -C dropbear --strip-components=1 \
   ; cd dropbear \
-  ; autoconf && autoheader && ./configure --enable-static \
+  ; autoconf \
+  ; autoheader \
+  ; ./configure --enable-static \
   ; make PROGRAMS="dropbear dbclient scp dropbearkey dropbearconvert" \
   ; mkdir -p /target/bin \
   ; mv dbclient dropbear scp dropbearkey dropbearconvert /target/bin \
@@ -70,7 +72,9 @@ RUN set -eux \
   ; sed -i 's/^.*\(%sudo.*\)ALL$/\1NOPASSWD:ALL/g' /etc/sudoers \
   \
   ; apt-get purge -y --auto-remove ${BUILD_DEPS:-} \
-  ; apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
+  ; apt-get autoremove -y \
+  ; apt-get clean -y \
+  ; rm -rf /var/lib/apt/lists/* \
   ;
 
 
