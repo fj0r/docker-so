@@ -25,8 +25,8 @@ xy = ["mihomo"]
 [assets.image.manifest.vessel]
 xy = ["ferron", "vessel", "box"]
 
-[assets.image.manifest.surreal]
-xy = ["surreal"]
+# [assets.image.manifest.surreal]
+# xy = ["surreal"]
 
 [assets.image.manifest.pg]
 xy = [
